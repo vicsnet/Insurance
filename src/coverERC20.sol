@@ -12,4 +12,8 @@ contract coverERC20 is ERC20 {
     ) ERC20(_name, _symbol) {
         Admin = msg.sender;
     }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
 }
