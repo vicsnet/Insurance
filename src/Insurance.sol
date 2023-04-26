@@ -33,8 +33,8 @@ contract Insurance {
     }
 
 
-    uint id;
-    uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
+    // uint id;
+    // uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
     // Policy
 
     // Why is the key of this mapping not "Address of the customer (msg.sender)"
