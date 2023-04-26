@@ -100,11 +100,11 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
     // event PolicyExpired(address indexed holder, uint256 amount, uint256 expiration);
 
     // setAmount to claim Insurance
-    function setClaimAmount(uint _amount) public{
+    function setClaimAmount(uint _amount) public onlyOwner {
         claimInsurance = _amount;
     }
 
-    function setDAOFee(uint _amount) public{
+    function setDAOFee(uint _amount) public onlyOwner{
         DAOFEE = _amount;
     }
 
@@ -118,13 +118,13 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
     function becomeAdmin(uint _daoFee, address _tokenContract) public payable {
         address account = msg.sender;
         if(DAOFEE == 0){
-            revert();
+            revert("Try again shortly");
         }
         if (_daoFee < DAOFEE){
-            revert();
+            revert("Amount less than fee");
         }
         if(IERC20(_tokenContract).balanceOf(account) < _daoFee){
-            revert();
+            revert("Insufficient balance");
         }
         IERC20(_tokenContract).transferFrom(account, address(this), _daoFee);
         require(msg.value > 0, "Insuficient Amount");
@@ -148,7 +148,7 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         //     }
         // }
         if (!hasRole(STAKEHOLDER_ROLE, msg.sender)){
-            revert();
+            revert("Unauthorized operation");
         }
         // require(isAdmin, "Only Dao member can create policy");
 
@@ -183,10 +183,10 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         uint _startTime = block.timestamp;
         uint expireTime = _startTime + _endTime;
         if(expireTime > MAXIMUM_POLICY_DURATION){
-            revert();
+            revert("Max policy duration exceeded");
         }
         if(expireTime < MINIMUM_POLICY_DURATION){
-            revert();
+            revert("Time less than policy duration");
         }
         uint _percent = cover[_coverId].PolicyPercent;
         uint premiumTobePaid = _coverAmount * _percent;
@@ -241,7 +241,7 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         );
         require(
             _amountToClaim <= _newPremium.CoverAmount,
-            "YOU_CAN_NOT_W ITHDRAW_MORE_THAN_YOU_HAVE_INSURED"
+            "YOU_CAN_NOT_WITHDRAW_MORE_THAN_YOU_HAVE_INSURED"
         );
         IERC20(_tokenContract).transferFrom(msg.sender, address(this), _tokenClaimFee);
         _newPremium.SubmitClaim = true;
@@ -265,7 +265,7 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         // }
 
          if (!hasRole(STAKEHOLDER_ROLE, msg.sender)){
-            revert();
+            revert("Unauthorized operation");
         }
         PremiumPurchase storage _newPremium = premiumBought[_rewardee][
             _coverId
@@ -290,7 +290,7 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         uint AmountLeft = _newPremium.CoverAmount -
             _newPremium.AmountToWithdraw;
 
-        //logic to transfer the token worth
+        //logic to transfer the token worth 
 
         _newPremium.CoverAmount = AmountLeft;
 
@@ -303,7 +303,7 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
 
     function renewPolicy(
         uint _coverId,
-        address _rewardee,
+        address _rewardee,//we can just leave this out and use msg.sender instead
         uint _endTime,
         uint _coverAmount,
         uint _amount,
@@ -353,7 +353,7 @@ IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
         uint256 proposalId = numOfProposals + 1;
         DAOProposal storage proposal = daoProposals[proposalId];
         proposal.id = proposalId;
-        proposal.proposer = payable(msg.sender);
+        proposal.proposer = payable(msg.sender); //are they paying to create proposal? If yes, are they paying with Eth? 
         proposal.description = description;
         proposal.amount = amount;
         proposal.livePeriod = block.timestamp + MINIMUM_VOTING_PERIOD;
@@ -437,7 +437,7 @@ function releasePayment(uint256 proposalId, address _tokenContract) public onlyO
    
     DAOProposal storage daoProposal = daoProposals[proposalId];
     if(!daoProposal.paid){
-        revert();
+        revert("Payment already made");
     }
     IERC20(_tokenContract).transfer(account, daoProposal.amount);
 }
