@@ -2,14 +2,20 @@
 pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
+import "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-contract Insurance is AccessControl {
+contract Insurance is AccessControl, ReentrancyGuard {
     uint256 id;
     uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
     uint256 claimInsurance;
     uint256 DAOFEE;
+    uint256 numOfProposals;
     uint32 public constant MINIMUM_POLICY_DURATION = 1 weeks;
     bytes32 public constant STAKEHOLDER_ROLE = keccak256("STAKEHOLDER");
+    bytes32 public constant MAJOR_ADMIN= keccak256("MAJORADMIN");
+    uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
+    address Owner ;
+    
     // Policy
     struct Cover {
         string PolicyName; //Policy Name
@@ -17,25 +23,6 @@ contract Insurance is AccessControl {
         bool PolicyActive; //to know if the policy is still in pogress
         bytes32 Agreement;
     }
-
-
-    struct DAOProposal {
-        uint256 id;
-        uint256 amount;
-        uint256 livePeriod;
-        uint256 votesFor;
-        uint256 votesAgainst;
-        string description;
-        bool votingPassed;
-        bool paid;
-        address payable charityAddress;
-        address proposer;
-        address paidBy;
-    }
-
-    mapping(uint => Cover) private cover;
-    Cover[] public _arrayCover;
-    uint[] public saveId; //to save the whole ids
 
     struct PremiumPurchase {
         uint CoverId;
@@ -53,9 +40,34 @@ contract Insurance is AccessControl {
         uint AmountToWithdraw; //Amount of Insured to withdraw
         // mapping(address => bool) Validate; //
     }
+
+    struct DAOProposal {
+        uint256 id;
+        uint256 amount;
+        uint256 livePeriod;
+        uint256 votesFor;
+        uint256 votesAgainst;
+        string description;
+        bool votingPassed;
+        bool paid;
+        address proposer;
+        address paidBy;
+        address AdminPaidTo;
+
+    }
+
+    mapping(uint => Cover) private cover;
+    Cover[] public _arrayCover;
+    uint[] public saveId; //to save the whole ids
+    mapping(uint256 => DAOProposal) private daoProposals; //mapping to hold the dao proposals
+    mapping(address => uint256[]) private stakeholderVotes;
+
+
     address[] private Admin;
     // mapping (address => PremiumPurchase) public purchaseCoverBought;
     mapping(address => mapping(uint => PremiumPurchase)) public premiumBought;
+
+    mapping (address => uint256) public stakeHoderToken; //keeping track of stakeholder token
 
     // Events
     event PolicyPurchased(
@@ -80,6 +92,8 @@ contract Insurance is AccessControl {
         uint256 indexed timestamp
     );
 
+event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposal);
+
     // event PolicyCancelled( address indexed holder, uint256 refundAmount );
 
     // event PolicyExpired(address indexed holder, uint256 amount, uint256 expiration);
@@ -91,6 +105,12 @@ contract Insurance is AccessControl {
 
     function setDAOFee(uint _amount) public{
         DAOFEE = _amount;
+    }
+
+    function verifyAccess() internal view{
+         if (!hasRole(STAKEHOLDER_ROLE, msg.sender)){
+            revert();
+        }
     }
 
     // joinDAO
@@ -317,4 +337,113 @@ IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
         }
         return true;
     }
+
+    // create Proposal
+
+        function createProposal(
+        string calldata description,
+        uint256 amount
+    )
+        external
+    
+    {
+        verifyAccess();
+
+        uint256 proposalId = numOfProposals + 1;
+        DAOProposal storage proposal = daoProposals[proposalId];
+        proposal.id = proposalId;
+        proposal.proposer = payable(msg.sender);
+        proposal.description = description;
+        proposal.amount = amount;
+        proposal.livePeriod = block.timestamp + MINIMUM_VOTING_PERIOD;
+
+        emit NewDAOProposal(msg.sender, amount, proposalId);
+    }
+
+    // to vote for a proposal
+        function vote(uint256 proposalId, bool supportProposal)
+        external
+
+    {
+        DAOProposal storage daoProposal = daoProposals[proposalId];
+
+        votable(daoProposal);
+
+        if (supportProposal){
+
+         daoProposal.votesFor++;
+        }
+        else{
+
+         daoProposal.votesAgainst++;
+        }
+
+        stakeholderVotes[msg.sender].push(daoProposal.id);
+    }
+
+    function votable(DAOProposal storage daoProposal) internal {
+        if (
+            daoProposal.votingPassed ||
+            daoProposal.livePeriod <= block.timestamp
+        ) {
+            daoProposal.votingPassed = true;
+            revert("Voting period has passed on this proposal");
+        }
+
+        uint256[] memory tempVotes = stakeholderVotes[msg.sender];
+        for (uint256 votes = 0; votes < tempVotes.length; votes++) {
+            if (daoProposal.id == tempVotes[votes])
+                revert("This stakeholder already voted on this proposal");
+        }
+    }
+
+// release fund
+    function checkVote(uint256 proposalId)
+        external
+    {
+        verifyAccess();
+        uint _adminPercent = (Admin.length * 70) / 100;
+
+        DAOProposal storage daoProposal = daoProposals[proposalId];
+        uint256 totalVotes = daoProposal.votesFor + daoProposal.votesAgainst;
+        if(daoProposal.livePeriod < block.timestamp && totalVotes >= _adminPercent){
+            revert();
+        }
+
+        if (daoProposal.paid)
+            revert("Payment has been made to this charity");
+
+        if (daoProposal.votesFor <= daoProposal.votesAgainst)
+            revert(
+                "The proposal does not have the required amount of votes to pass"
+            );
+
+        daoProposal.paid = true;
+        daoProposal.paidBy = msg.sender;
+
+        // emit PaymentTransfered(
+        //     msg.sender,
+        //     charityProposal.charityAddress,
+        //     charityProposal.amount
+        // );
+
+        // return charityProposal.charityAddress.transfer(charityProposal.amount);
+    }
+
+    // release Amount to MainAdmin for the purpose of the agreed purpose
+function releasePayment(uint256 proposalId, address _tokenContract) public {
+    address account = msg.sender;
+    if(!hasRole(MAJOR_ADMIN, account)){
+        revert();
+    }
+    DAOProposal storage daoProposal = daoProposals[proposalId];
+    if(!daoProposal.paid){
+        revert();
+    }
+    IERC20(_tokenContract).transfer(account, daoProposal.amount);
 }
+
+}
+
+
+
