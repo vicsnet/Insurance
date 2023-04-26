@@ -4,37 +4,73 @@ pragma solidity ^0.8.13;
 
 contract Insurance {
     uint id;
+    uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
+// Policy
     struct Cover{
-        string PolicyName; //Policy Name
+        // Are we not to be the one to decide the name of the POLICY???
+        string PolicyName; //Policy Name 
         uint PolicyPercent; //Annual Rate
         bool PolicyActive; //to know if the policy is still in pogress
         bytes Agreement;
     }
 
-    mapping(uint => Cover) private cover;
-    Cover[] public _arrayCover;
-    uint[] public saveId; //to save the whole ids
-
-    struct PremiumPurchase{
+    struct PremiumPurchase {
         uint CoverId;
         uint TotalPeriod;
         uint CoverAmount; //Amount to be insured
         uint Premium; //Amount to be charged
         uint StartTime;
         uint EndTime;
+        uint ValidateCounter;
+        uint AmountToWithdraw; //Amount of Insured to withdraw
+        address PremiumBuyerAddr; //address of the premium purchaser
         bool Paid;
         bool SubmitClaim;
-        bool AdminVerified;
-        bool Validate; //to check if the claim is valid 
-        uint ValidateCounter;
+        bool AdminVerified; 
+        bool Validate; //to check if the claim is valid
         // mapping(address => bool) Validate; //
 
     }
+
+
+    uint id;
+    uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
+    // Policy
+
+    // Why is the key of this mapping not "Address of the customer (msg.sender)"
+    mapping(uint => Cover) private cover; 
+    Cover[] public _arrayCover; 
+    uint[] public saveId; //to save the whole ids
+
+
     address[] private Admin;
 // mapping (address => PremiumPurchase) public purchaseCoverBought;
     mapping(address => mapping(uint => PremiumPurchase)) public premiumBought;
 
-// joinDAO
+
+// Events 
+    event PolicyPurchased( address indexed holder, uint256 coverAmount, uint256 premium, uint256 indexed coverid, uint256 indexed expiration );
+
+    event ClaimSubmitted( address indexed holder, uint256 amount, uint256 timestamp );
+
+    // event ClaimValidated( address indexed holder, uint256 amount, uint256 timestamp );
+    // uint i = 0;
+    // while (i < saveId.length && !isCoverId) {
+        // if (saveId[i] == _coverId) {
+            // isCoverId = true;
+        // }
+        // i++;
+    // }
+    // 
+    event ClaimPaidOut( address indexed holder, uint256 indexed amount, uint256 indexed timestamp );
+
+    // event PolicyCancelled( address indexed holder, uint256 refundAmount );
+
+    // event PolicyExpired(address indexed holder, uint256 amount, uint256 expiration);
+
+    // ======================  joinDAO =================================
+
+// ???? WHO DEY BECOME ADMIN ??? ==========================
 function becomeAdmin() public payable{
     require(msg.value > 0, "Insuficient Amount");
     Admin.push(msg.sender);
@@ -42,9 +78,10 @@ function becomeAdmin() public payable{
 }
     function CreateCover(string calldata _policyName, uint _policyPercent, bool _policyActive, bytes memory _agreement) public {
         bool isAdmin = false;
-        id +=1;
-        for(uint i = 0; i < Admin.length; i++ ){
-            if(Admin[i] == msg.sender){
+        id += 1;
+        // ==============WHILE LOOP??????????????????????????????????
+        for (uint i = 0; i < Admin.length; i++) {
+            if (Admin[i] == msg.sender) {
                 isAdmin = true;
                 break;
             }
@@ -58,17 +95,27 @@ function becomeAdmin() public payable{
             Agreement: _agreement
         });
         cover[id] = newCover;
-_arrayCover.push(newCover);
-saveId.push(id);
+        _arrayCover.push(newCover);
+        saveId.push(id);
 
     }
 
 // buy premium
     function purchasePremium(uint _coverId, uint _totalPeriod, uint _coverAmount, uint _endTime, uint _amount) public {
         bool isCoverId = false;
-        for(uint i = 0; i < saveId.length; i++){
-            if(saveId[i] == _coverId){
-                isCoverId =true;
+        // ==============WHILE LOOP??????????????????????????????????
+        // uint i = 0;
+        // while (i < saveId.length && !isCoverId) {
+        //         if (saveId[i] == _coverId) {
+        //         isCoverId = true;
+        //     }
+        //     i++;
+        // }
+
+
+        for (uint i = 0; i < saveId.length; i++) {
+            if (saveId[i] == _coverId) {    // random trial from anyone
+                isCoverId = true;
                 break;
             }
         }
