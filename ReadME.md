@@ -9,6 +9,7 @@ The Neon Guard DAO operates as a discretionary mutual - people can join, share r
 *What we Cover*
 
 1. Custody cover
+
 Crypto assets held in custodial accounts on an exchange are held in wallets that users do not have access to, hence do not have control over.
 
 Users run the risk of a loss due to a custodial wallet hack or the potential for withdrawals to be halted without notice, or the centralized exchange going bankrupt, which would prevent users from accessing their funds on the centralized exchange. Users are protected from this risk when they subscribe to our custody cover.
@@ -22,6 +23,11 @@ i. A hack on the custodial wallet or exchange used by the subscriber that leads 
 ii. An unannounced halting of withdrawal on the custodian platform that exceeds more than 90 days. 
 
 iii. A sudden declare of bankrupcy by the custodian that make no prior announcement for users to withdraw their assets, and did not make any announcement to refund users at any time in the future.
+
+for complete infomation on custody cover, see 'Custody cover' in products section below.
+
+
+2. Stablecoin depeg cover
 
 
 
