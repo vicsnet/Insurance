@@ -16,6 +16,7 @@ Users run the risk of a loss due to a custodial wallet hack or the potential for
 How it works:
 
 Subscribers can claim custody cover in any of the these conditions:
+
 i. A hack on the custodial wallet or exchange used by the subscriber that leads to loss of more than 10% of the subscriber's funds.
 
 ii. An unannounced halting of withdrawal on the custodian platform that exceeds more than 90 days. 
