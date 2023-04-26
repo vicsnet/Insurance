@@ -1,4 +1,4 @@
----------------- *NEON GUARD DEFI INSURANCE*  ------------------------
+---------------- **NEON GUARD DEFI INSURANCE**  ------------------------
 
 *Getting started*
 
@@ -11,7 +11,12 @@ The Neon Guard DAO operates as a discretionary mutual - people can join, share r
 1. Custody cover
 Crypto assets held in custodial accounts on an exchange are held in wallets that users do not have access to, hence do not have control over.
 
-Users run the risk of a loss due to a custodial wallet hack or the potential for withdrawals to be halted without notice, or the centralized exchange going bankrupt, which would prevent users from accessing their funds on the centralized exchange.
+Users run the risk of a loss due to a custodial wallet hack or the potential for withdrawals to be halted without notice, or the centralized exchange going bankrupt, which would prevent users from accessing their funds on the centralized exchange. Users are protected from this risk when they subscribe to our custody cover.
+
+How it works:
+
+
+
 
 
 NEON GUARD DAO
