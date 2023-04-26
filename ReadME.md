@@ -33,6 +33,8 @@ Stablecoins are crypto coins that are supposed to maintain a stable price. These
 
 Depeg happens when a stablecoin's value trades off the intended peg or threshold. For instance, if a coin that is pegged to $1 deviates and trades at $0.8, a depeg has occurred.
 
+Subscribers who are affected by a depeg event, and who actually sold their assets at the depeg price for a loss will be aligible for a claim. The value reinbursed is the difference in the normal price and the depegged price. For example, 
+
 
 NEON GUARD DAO
 
