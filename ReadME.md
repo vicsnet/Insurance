@@ -29,7 +29,9 @@ for complete infomation on custody cover, see 'Custody cover' in products sectio
 
 2. Stablecoin depeg cover
 
+Stablecoins are crypto coins that are supposed to maintain a stable price. These coins are pegged to another asset that helps maintain their stability; most of them are pegged to the USD.
 
+Depeg happens when a stablecoin's value trades off the intended peg or threshold. For instance, if a coin that is pegged to $1 deviates and trades at $0.8, a depeg has occurred.
 
 
 NEON GUARD DAO
