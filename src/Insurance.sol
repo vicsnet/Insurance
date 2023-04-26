@@ -3,8 +3,9 @@ pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract Insurance is AccessControl, ReentrancyGuard {
+contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     uint256 id;
     uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
     uint256 claimInsurance;
@@ -431,11 +432,9 @@ IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
     }
 
     // release Amount to MainAdmin for the purpose of the agreed purpose
-function releasePayment(uint256 proposalId, address _tokenContract) public {
+function releasePayment(uint256 proposalId, address _tokenContract) public onlyOwner {
     address account = msg.sender;
-    if(!hasRole(MAJOR_ADMIN, account)){
-        revert();
-    }
+   
     DAOProposal storage daoProposal = daoProposals[proposalId];
     if(!daoProposal.paid){
         revert();
