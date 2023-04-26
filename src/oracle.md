@@ -72,7 +72,14 @@ there are two approach to this:::
 
  // ========================================================
 
-   import "https://github.com/provable-things/ethereum-api/blob/master/provableAPI_0.6.sol";
+   <!-- import "https://github.com/provable-things/ethereum-api/blob/master/provableAPI_0.6.sol"; -->
+
+
+    import "https://github.com/provable-things/ethereum-api/provableAPI.sol";
+
+
+    ethereum-api/blob/master/provableAPI_0.6.sol
+
 contract Insurance is usingProvable {
 
   mapping(string => uint) private exchangeAssets;
