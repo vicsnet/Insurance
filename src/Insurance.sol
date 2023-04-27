@@ -4,7 +4,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
-
+import "lib/chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     uint256 id;
     uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
@@ -15,7 +15,9 @@ contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     bytes32 public constant STAKEHOLDER_ROLE = keccak256("STAKEHOLDER");
     bytes32 public constant MAJOR_ADMIN= keccak256("MAJORADMIN");
     uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
-    address Owner ;
+    
+
+    AggregatorV3Interface internal priceFeed;
     
     // Policy
     struct Cover {
@@ -39,7 +41,7 @@ contract Insurance is AccessControl, ReentrancyGuard, Ownable{
         uint ValidateCounter;
         address PremiumBuyerAddr; //address of the premium purchaser
         uint AmountToWithdraw; //Amount of Insured to withdraw
-        // mapping(address => bool) Validate; //
+        int InitAssetPrice; //Initial asset price as at time of buying cover
     }
 
     struct DAOProposal {
@@ -100,11 +102,11 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
     // event PolicyExpired(address indexed holder, uint256 amount, uint256 expiration);
 
     // setAmount to claim Insurance
-    function setClaimAmount(uint _amount) public{
+    function setClaimAmount(uint _amount) public onlyOwner{
         claimInsurance = _amount;
     }
 
-    function setDAOFee(uint _amount) public{
+    function setDAOFee(uint _amount) public onlyOwner{
         DAOFEE = _amount;
     }
 
@@ -163,14 +165,45 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         saveId.push(id);
     }
 
+// get price feed from oracle
+// it takes in usdc and dai for now
+
+    function getPriceFeedAddress(string memory _assetSymbol) internal pure returns (address) {
+    if (keccak256(abi.encodePacked(_assetSymbol)) == keccak256(abi.encodePacked("USDC"))) {
+        return 0xA2F78ab2355fe2f984D808B5CeE7FD0A93D5270E; // address of USDC price feed contract
+    } else if (keccak256(abi.encodePacked(_assetSymbol)) == keccak256(abi.encodePacked("DAI"))) {
+        return 0x14866185B1962B63C3Ea9E03Bc1da838bab34C19; // address of ETH price feed contract
+    }  else {
+        revert("Invalid asset symbol"); // throw an error if the asset symbol is not supported
+    }
+    }
+// Determine price feed
+
+        function getAssetPrice(string memory _assetSymbol, uint _coverId) internal returns(int) {
+        // create an instance of the price feed contract for the given asset symbol
+        priceFeed = AggregatorV3Interface(getPriceFeedAddress(_assetSymbol));
+
+        // get the latest price from the price feed contract
+        (, int price, , , ) = priceFeed.latestRoundData();
+        premiumBought[msg.sender][_coverId].InitAssetPrice = price;
+        return price;
+
+    
+        }
+
+
     // buy premium
     function purchasePremium(
         uint _coverId,
         uint _totalPeriod,
-        uint _coverAmount,
+        uint _coverAmount, //
         uint _endTime,
         uint _amount,
-        address _TokenContract
+        address _TokenContract, // token address for payment
+        string memory _assetSymbol,
+        bool _deppeg, //to check if is a stable coin or not
+        address _walletAddress, //Address of the token you are insuring
+        address _contractAddress // contract Address of the wallet 
     ) public {
         bool isCoverId = false;
         for (uint i = 0; i < saveId.length; i++) {
@@ -179,7 +212,22 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
                 break;
             }
         }
-        require(isCoverId, "This Id does not exist");
+        if(!isCoverId){
+            revert();
+        }
+        // require(isCoverId, "This Id does not exist");
+
+        // determine pricefeed 
+        if(_deppeg){
+
+      int price =  getAssetPrice(_assetSymbol, _coverId);
+        uint _balance = IERC20(_contractAddress).balanceOf(_walletAddress);
+        if(_balance < _coverAmount){
+            revert();
+        }
+        
+        }
+
         uint _startTime = block.timestamp;
         uint expireTime = _startTime + _endTime;
         if(expireTime > MAXIMUM_POLICY_DURATION){
@@ -217,6 +265,9 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         );
         // transfer nft logic
     }
+
+
+
 
     // Submit claim to receive insurance fee
     function submitClaim(
