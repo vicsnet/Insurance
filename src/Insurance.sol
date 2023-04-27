@@ -216,7 +216,16 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
             revert();
         }
         // require(isCoverId, "This Id does not exist");
+   uint _percent = cover[_coverId].PolicyPercent;
 
+    uint _startTime = block.timestamp;
+        uint expireTime = _startTime + _endTime;
+        if(expireTime > MAXIMUM_POLICY_DURATION){
+            revert();
+        }
+        if(expireTime < MINIMUM_POLICY_DURATION){
+            revert();
+        }
         // determine pricefeed 
         if(_deppeg){
 
@@ -225,18 +234,21 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         if(_balance < _coverAmount){
             revert();
         }
-        
+        uint _amountToCharge = uint (price ) *_percent * _endTime;
+        require(_amount >= _amountToCharge, "Insufficient Amount");
+        require(
+            IERC20(_TokenContract).balanceOf(msg.sender) >= _amount,
+            "INSUFFICIENT_AMOUNT_IN_BALANCE"
+        );
+
+        IERC20(_TokenContract).transferFrom(msg.sender, address(this), _amount);
         }
 
-        uint _startTime = block.timestamp;
-        uint expireTime = _startTime + _endTime;
-        if(expireTime > MAXIMUM_POLICY_DURATION){
-            revert();
-        }
-        if(expireTime < MINIMUM_POLICY_DURATION){
-            revert();
-        }
-        uint _percent = cover[_coverId].PolicyPercent;
+if(!_deppeg){
+    
+}
+       
+     
         uint premiumTobePaid = _coverAmount * _percent;
         require(_amount >= premiumTobePaid, "Insufficient Amount");
         require(
