@@ -50,6 +50,9 @@ createPolicy.PolicyOffer = abi.encode(_policyOffer);
 createPolicy.MinimumPeriod = _minimumPeriod;
 createPolicy.MaximumPeriod = _maximumPeriod;
 
+InsurancePolicy memory newPolicy = InsurancePolicy({PolicyName:_policyName, PolicyActive:true, Agreement:abi.encode(_agreement), PolicyOffer: abi.encode(_policyOffer), MinimumPeriod: _minimumPeriod, MaximumPeriod: _maximumPeriod });
+arrayPolicy.push(newPolicy);
+
     }
 
 
