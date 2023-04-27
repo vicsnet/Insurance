@@ -59,6 +59,28 @@ there are two approach to this:::
 
     }
 
+
+    /*
+    The getPriceFeedAddress function is not defined in the code snippet I provided earlier, so it needs to be implemented by you. This function should return the address of the price feed contract for the given asset symbol.
+    
+    You can implement this function in a number of ways. One way would be to hard-code the addresses of the price feed contracts for each asset symbol in the smart contract code. Another way would be to retrieve the addresses from a registry or mapping data structure.
+    
+    Here's an example implementation of the getPriceFeedAddress function that hard-codes the addresses of the price feed contracts for each asset symbol:
+    */
+
+    function getPriceFeedAddress(string memory _assetSymbol) private pure returns (address) {
+    if (keccak256(abi.encodePacked(_assetSymbol)) == keccak256(abi.encodePacked("BTC"))) {
+        return 0x7c5d4F8345e66f68099581Db340cd65B078C41fD; // address of BTC price feed contract
+    } else if (keccak256(abi.encodePacked(_assetSymbol)) == keccak256(abi.encodePacked("ETH"))) {
+        return 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // address of ETH price feed contract
+    } else if (keccak256(abi.encodePacked(_assetSymbol)) == keccak256(abi.encodePacked("LINK"))) {
+        return 0x271bf4568fb737cc2e6277e9B1EE0034098cDA2; // address of LINK price feed contract
+    } else {
+        revert("Invalid asset symbol"); // throw an error if the asset symbol is not supported
+    }
+}
+
+
 ```
 
 ### ...............................................
