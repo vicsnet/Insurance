@@ -110,8 +110,46 @@ there are two approach to this:::
     return premium;
     }
 
-    }
 
+    <!-- =========SOME RANDOM & FUNNY FACTORS=========== -->
+
+    <!-- In this implementation the premium logic is factored out based on the total value of assets, age, smoking status, and pre-existing conditions. We can adjust the values or add more factors as needed. -->
+
+    function calculatePremiumLogic(uint _totalValue, uint _age, bool _smoker, bool _preexistingCondition) private pure returns (uint) {
+
+    uint premium = 0;
+    
+    // add premium based on total value
+    if (_totalValue < 100000) {
+      premium += 1000;
+    } else if (_totalValue < 500000) {
+      premium += 5000;
+    } else {
+      premium += 10000;
+    }
+    
+    // add premium based on age
+    if (_age > 60) {
+      premium += 5000;
+    } else if (_age > 40) {
+      premium += 2000;
+    } else {
+      premium += 1000;
+    }
+    
+    // add premium based on smoking status
+    if (_smoker) {
+      premium += 5000;
+    }
+    
+    // add premium based on pre-existing conditions
+    if (_preexistingCondition) {
+      premium += 10000;
+    }
+    
+    return premium;
+
+    }
 }
 
 
