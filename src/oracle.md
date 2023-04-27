@@ -57,14 +57,16 @@ there are two approach to this:::
         // calculate the premium based on the total value and other risk factors
         }
 
-    }
 
+
+
+    <!-- ==========GETPRICEADDRESS FUNCTION ============= -->
 
     /*
     The getPriceFeedAddress function is not defined in the code snippet I provided earlier, so it needs to be implemented by you. This function should return the address of the price feed contract for the given asset symbol.
-    
+
     You can implement this function in a number of ways. One way would be to hard-code the addresses of the price feed contracts for each asset symbol in the smart contract code. Another way would be to retrieve the addresses from a registry or mapping data structure.
-    
+
     Here's an example implementation of the getPriceFeedAddress function that hard-codes the addresses of the price feed contracts for each asset symbol:
     */
 
@@ -78,6 +80,38 @@ there are two approach to this:::
     } else {
         revert("Invalid asset symbol"); // throw an error if the asset symbol is not supported
     }
+
+
+
+    <!-- ========== PREMIUM CALCULATION ============== -->
+
+    ...below the calculatePremium function calculates the total value of the assets and then calls the calculatePremiumLogic function to determine the premium to charge based on the total value and any other risk factors. In the calculatePremiumLogic function, for analogy's sake I used a simple calculation to determine the premium, charging 2% of the total value as the premium. We later can modify this function to include other risk factors and adjust the premium calculation as deemed necessary.
+
+
+    function calculatePremium(string[] memory _assets, uint[] memory _amounts) public view returns (uint) {
+    uint totalValue = 0;
+    
+    // loop through each asset and calculate the total value
+    for (uint i = 0; i < _assets.length; i++) {
+      int price = getAssetPrice(_assets[i]);
+      totalValue += uint(price * _amounts[i]);
+    }
+    
+    // calculate the premium based on the total value and other risk factors
+    uint premium = calculatePremiumLogic(totalValue);
+    
+    return premium;
+    }
+
+    function calculatePremiumLogic(uint _totalValue) private pure returns (uint) {
+    // calculate the premium based on the total value and other risk factors
+    // here's an example calculation:
+    uint premium = (_totalValue * 2) / 100; // charge 2% of the total value as premium
+    return premium;
+    }
+
+    }
+
 }
 
 
