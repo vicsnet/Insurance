@@ -187,8 +187,12 @@ contract Cover is AccessControl, Ownable {
         if (keccak256(_name) == zerohash) revert("Name cannot be blank");
         if (keccak256(_policyCovered) == zerohash)
             revert("Policy covered cannot be blank");
-        if (keccak256(_driversLicense_ID) == zerohash)
-            revert("Driver's license ID cannot be blank");
+        if(_startTime < presentTime) revert("Time already past");
+        if(_coverage <= 0) revert("Invalid coverage amount");
+        if(_coverageAmount <= 0) revert("Invalid coverage amount");
+        if(_age < 18 years) revert("Age is 18 years minimum");
+
+
 
         policy.FamilyName = _name;
         policy.policy.startTime = _startTime;
