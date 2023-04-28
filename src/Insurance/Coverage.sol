@@ -1,4 +1,4 @@
-// SPDX-License_Identifier: MIT
+// // SPDX-License_Identifier: MIT
 
 pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
@@ -214,6 +214,15 @@ contract Cover is AccessControl, Ownable {
         policy.age = _age;
         policy.policyCovered = _policyCovered;
 
+//         uint256 riskFactor = ((ageSum) * ageFactor) +
+//             genderFactor +
+//             BMIFactor +
+//             smokingFactor +
+//             familyHealthFactor;
+//         uint timeFactor = (_coveragPeriod / maxTime) * 1;
+//         uint _premium = (_coverageAmount * riskFactor) +
+//             determineAmount +
+//             (timeFactor * _coverageAmount);
 
     }
 
@@ -238,7 +247,8 @@ contract Cover is AccessControl, Ownable {
 
     //edit Insurance Policy
 
-    //cancel insurance Policy
+//cancel insurance Policy
+
 
     // Become an Investor
 
