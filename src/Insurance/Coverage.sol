@@ -27,6 +27,12 @@ contract Cover is AccessControl, Ownable {
         uint MaximumPeriod; // maximum period in days
     }
 
+// struct to track when subscribers apply for claim
+    struct ClaimDetails{
+        uint256 AmountApplied;
+        string Event;
+    }
+
     // Struct to purchase Insurance Policy
     struct PolicyPurchase {
         uint InsureId;
@@ -57,6 +63,7 @@ contract Cover is AccessControl, Ownable {
 
     mapping(uint => InsurancePolicy) public insurePolicy;
     mapping(address => mapping(uint => PolicyPurchase)) public policyBought;
+    mapping(address => ClaimDetails) public userClaimDetails;
 
     InsurancePolicy[] public arrayPolicy;
     address[] public admins;
@@ -197,6 +204,7 @@ contract Cover is AccessControl, Ownable {
         if(_coverageAmount <= 0) revert("Invalid coverage amount");
         if(_age < 18 years) revert("Age is 18 years minimum");
 
+        // payment
 
         policy.FamilyName = _name;
         policy.policy.startTime = _startTime;
@@ -211,10 +219,22 @@ contract Cover is AccessControl, Ownable {
 
     // claim Health Insurance
     // if claim is once rejected you have to pay to resubmit claim
+    function claimAutoInsurance(uint _insureId, uint256 _amount, string calldata _event ) external {
+        policyBought storage policy = policyBought[msg.sender][_insureId];
+
+        if(policy.deductible <= 0) revert("Deductible payment not on record");
+        
+        uint256 totalSub = policy.CoverageAmount;
+        userClaimDetails[msg.sender].AmountApplied = _amount;
+        userClaimDetails[msg.sender].Event = _event;
+    }
 
     // vote for a claim
 
     // Check if claim is Succesful or rejected
+    function checkClaimResult() external view returns(bool){
+
+    }
 
     //edit Insurance Policy
 
