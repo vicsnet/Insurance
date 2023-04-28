@@ -23,8 +23,8 @@ contract NewCoverage is AccessControl, Ownable {
         uint256 StartTime;
         uint256 EndTime;
         uint256 deductible;
-        uint256 AmountPaid;
-        uint256 CoverageAmount;
+        uint256 AmountPaid; //amount to be paid
+        uint256 CoverageAmount; //amount to insure
         string FamilyName;
         bool Claim;
         bool paid;
@@ -96,16 +96,18 @@ contract NewCoverage is AccessControl, Ownable {
         uint _insureId,
         uint _percentageToCover,
         uint _familyNo,
-        string[] memory _gender,
+        uint[] memory _age,
+
         bool _familyHealthStatus,
         bool _smoke,
+
         string memory _familyName
     ) public {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         newPolicy.InsureId = _insureId;
         newPolicy.PercentageToCover = _percentageToCover;
         newPolicy.detailsOfhealth.FamilyNo = _familyNo;
-        newPolicy.detailsOfhealth.Gender = _gender;
+        newPolicy.detailsOfhealth.age = _age;
         newPolicy.detailsOfhealth.FamilyHealthStatus = _familyHealthStatus;
         newPolicy.detailsOfhealth.Smoke = _smoke;
         newPolicy.FamilyName = _familyName;
@@ -119,6 +121,7 @@ contract NewCoverage is AccessControl, Ownable {
         uint _amountToInsure
     ) public // uint _periodOfCoverage
     {
+        // uint id = _insureId;
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         // uint policyD = newPolicy;
         uint timeToStart_ = block.timestamp + _startTime;
@@ -130,10 +133,11 @@ contract NewCoverage is AccessControl, Ownable {
         uint coverToPay = (newPolicy.CoverageAmount * 1) / 100;
         uint _amountInsureCover = _amountToInsure;
         uint256 determineAmount = _amountInsureCover * coverToPay;
+        newPolicy.deductible = determineAmount;
         uint256 ageSum;
-        uint ageFactor = uint256(40 * 1) / 100;
-        uint genderFactor = uint256(10 * 1) / 100;
-        uint BMIFactor = uint256(20 * 1) / 100;
+        // uint ageFactor = uint256(40 * 1) / 100;
+        // uint genderFactor = uint256(10 * 1) / 100;
+        // uint BMIFactor = uint256(20 * 1) / 100;
         uint smokingFactor;
         uint familyHealthFactor;
         for (uint i = 0; i < _age.length; i++) {
@@ -156,19 +160,28 @@ contract NewCoverage is AccessControl, Ownable {
             familyHealthFactor = _healthFactor;
         }
 
-        uint256 riskFactor = ((ageSum) * ageFactor) +
-            genderFactor +
-            BMIFactor +
+        uint256 riskFactor = ((ageSum) * (uint256(40 * 1) / 100)) +
+            (uint256(10 * 1) / 100) +
+            (uint256(20 * 1) / 100) +
             smokingFactor +
             familyHealthFactor;
 
-        uint timeFactor = (timeToEnd_ / 365 days) * 1;
+        // uint timeFactor = (timeToEnd_ / 365 days) * 1;
 
         uint _premium = (_amountInsureCover * riskFactor) +
             determineAmount +
-            (timeFactor * _amountInsureCover);
+            (((timeToEnd_ / 365 days) * 1) * _amountInsureCover);
 
         // return _premium;
+        newPolicy.AmountPaid = _premium;
+        newPolicy.StartTime = timeToStart_;
+        newPolicy.EndTime = timeToEnd_;
+        newPolicy.CoverageAmount = _amountInsureCover;
+//         uint id_ = newPolicy.InsureId;
+// saveDetails(_premium, id_);
+    }
+    function saveDetails (uint _premium, uint _insureId) internal{
+        PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         newPolicy.AmountPaid = _premium;
     }
 }
