@@ -37,7 +37,7 @@ contract Cover is AccessControl, Ownable {
         uint[] Ages;
         uint deductible; //percentage of deductible
         bool paid; //Insurance policy paid
-        string policyCoverd;
+        string policyCovered;
     }
 
     mapping(uint => InsurancePolicy) public insurePolicy;
@@ -142,6 +142,10 @@ contract Cover is AccessControl, Ownable {
 
         policy.FamilyName = _name;
         policy.
+        policy.startTime = _startTime;
+        policy.EndTime = _endTime;
+        policy.
+        policy.policyCovered = _policyCovered;
     }
 
     // claim Health Insurance
