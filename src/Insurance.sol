@@ -230,6 +230,7 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         if(_deppeg){
 
       int price =  getAssetPrice(_assetSymbol, _coverId);
+
         uint _balance = IERC20(_contractAddress).balanceOf(_walletAddress);
         if(_balance < _coverAmount){
             revert();
@@ -245,7 +246,7 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         }
 
 if(!_deppeg){
-    
+
 }
        
      
