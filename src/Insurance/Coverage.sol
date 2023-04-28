@@ -17,28 +17,34 @@ contract Cover is AccessControl, Ownable {
         string PolicyName; //insurance Name
         bool PolicyActive; //is this Policy still Active
         bytes Agreement;
-        bytes PolicyOffer; //determine the type of Policy to buy
-        uint MinimumPeriod; // minimum period in which insurance covers
-        uint MaximumPeriod; // maximum period
+        bytes PolicyOffer; //determine the type of Policy to buy 
+        uint MinimumPeriod; // minimum period in which insurance covers in days
+        uint MaximumPeriod; // maximum period in days
     }
 
     // Struct to purchase Insurance Policy
     struct PolicyPurchase {
         uint InsureId;
         uint PercentageToCover; //percentage of premium to buy which determine deductible
-        uint startTime; //when deductible start
-        uint EndTime; //when deductible ends in weeks
-        bool Claim; //has insurance claim been filed this should be enum
-        string FamilyName;
-        string[] FamilyHealthStatus;
-        bytes FamilyHospital;
-        string[] prescription;
-        uint[] Gender;
-        uint[] Ages;
+        uint StartTime; //when deductible start
+        uint EndTime;  //when deductible ends in weeks
         uint deductible; //percentage of deductible
+        uint AmountPaid; //premium to pay or paid
+        uint FamilyNo; //no in family
+        uint CoverageAmount; //the amount you want the insurance policy to cover
+        uint[] Ages; //Ages of the people in family
+        string FamilyName; //The Family Name
+        string PolicyCoverd; // for health Purpose single, Extended family, Family
+        string[] Gender; //members gender
+        string[] prescription; //on any prescription
+        bytes FamilyHospital;
+        bool FamilyHealthStatus; //the status of health includin allergy
+        bool Claim; //has insurance claim been filed this should be enum
         bool paid; //Insurance policy paid
         string policyCovered;
+        bool Smoke; 
     }
+    enum ClaimProcess {item1, item2 }
 
     mapping(uint => InsurancePolicy) public insurePolicy;
     mapping(address => mapping(uint => PolicyPurchase)) public policyBought;
@@ -99,22 +105,54 @@ contract Cover is AccessControl, Ownable {
 
     // buy Automobile policy
 
-    //buy Health Policy
-    function buyHealth(
-        string calldata _familyName,
-        uint _amount,
-        uint _insureId,
-        uint _startTime,
-        uint _endTime,
-        uint _coverage,
-        uint _plan,
-        string memory _policyCovered,
-        uint[] calldata _age
-    ) external returns (uint deductible) {
-        uint presentTime = block.timestamp;
-        uint maxTime = insurePolicy[_insureId].MaximumPeriod;
-        if ((presentTime + _endTime) > maxTime) revert("Time exceeds max coverage period for policy");
-    }
+
+// Age: 40%
+// Gender: 10%
+// BMI: 20%
+// Smoking status: 20%
+// Family history: 10%
+//buy Health Policy
+function buyHealth(string calldata _familyName, uint _amount, uint _insureId, uint _endTime, uint _coverage, string memory _policyCovered, uint[] calldata _age, string[] calldata _gender, uint _familyNo, bool _familyHealthStatus, string[] memory _prescription, string memory _familyHospitalName, uint _coverageAmount, bool _smoke ) external returns(uint deductible){
+
+uint presentTime = block.timestamp;
+uint maxTime = insurePolicy[_insureId].MaximumPeriod;
+uint _coveragPeriod = presentTime + _endTime;
+
+if((presentTime + _endTime) > maxTime ) revert();
+
+// for gender everyone has 10%
+// for BMI everyone has 20%
+// for smoking status 20%
+// for Age 40%
+
+uint riskFactor;
+uint timeFactor = (_coveragPeriod / maxTime) * 1 ;
+uint _premium;
+deductible;
+
+
+
+bytes memory _hospitalName = abi.encode(_familyHospitalName);
+PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+newPolicy.InsureId = _insureId;
+newPolicy.PercentageToCover = _coverage;
+newPolicy.StartTime = presentTime;
+newPolicy.EndTime = presentTime + _endTime;
+newPolicy.AmountPaid = _amount;
+newPolicy.FamilyNo = _familyNo;
+newPolicy.Ages = _age;
+newPolicy.FamilyName = _familyName;
+newPolicy.PolicyCoverd = _policyCovered;
+newPolicy.FamilyHealthStatus = _familyHealthStatus;
+newPolicy.prescription = _prescription;
+newPolicy.FamilyHospital = _hospitalName;
+newPolicy.Gender = _gender;
+newPolicy.CoverageAmount = _coverageAmount;
+newPolicy.Smoke = _smoke;
+
+
+
+}
 
     //claim Automobile insurance
     function buyAutoInsurance(
