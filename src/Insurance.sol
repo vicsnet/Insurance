@@ -16,10 +16,10 @@ contract Insurance {
 =======
 contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     uint256 id;
-    uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
     uint256 claimInsurance;
     uint256 DAOFEE;
     uint256 numOfProposals;
+    uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
     uint32 public constant MINIMUM_POLICY_DURATION = 1 weeks;
     bytes32 public constant STAKEHOLDER_ROLE = keccak256("STAKEHOLDER");
     bytes32 public constant MAJOR_ADMIN= keccak256("MAJORADMIN");
