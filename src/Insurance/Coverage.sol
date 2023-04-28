@@ -6,11 +6,12 @@ import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 
 contract Cover is AccessControl, Ownable{
-uint256 insureId;
-uint256 private constant MINIMUM_POLICY_DURATION = 1 weeks; // minimum period in which insurance covers
-uint256 private constant MAXIMUM_POLICY_DURATION = 365 days; // maximum period in which insurance covers
-bytes32 public constant ADMIN_ROLE = keccak256("NEO_ADMIN");
-bytes32 public constant MAJOR_ADMIN= keccak256("MAJORADMIN");
+
+    uint256 insureId;
+    uint256 private constant MINIMUM_POLICY_DURATION = 1 weeks; // minimum period in which insurance covers
+    uint256 private constant MAXIMUM_POLICY_DURATION = 365 days; // maximum period in which insurance covers
+    bytes32 public constant ADMIN_ROLE = keccak256("NEO_ADMIN");
+    bytes32 public constant MAJOR_ADMIN= keccak256("MAJORADMIN");
 // Struct to create Insurance Policy
 
     struct InsurancePolicy{
@@ -37,9 +38,10 @@ bytes32 public constant MAJOR_ADMIN= keccak256("MAJORADMIN");
     InsurancePolicy[] public arrayPolicy;
     address[] public admins;
 
-    constructor() {
-        Admin = msg.sender;
-    }
+
+    // function setMajorAdmin() external onlyOwner {
+    //     _setupRole(MAJOR_ADMIN, msg.sender);
+    // }
 
 // Register Admin
     function registerAdmin(address _newAdmin) external onlyOwner {
@@ -76,6 +78,9 @@ function createInsurancePolicy(string memory _policyName, string [] memory _agre
 
 
 // buy Automobile policy
+function buyAutoPolicy() external {
+
+}
 
 //buy Health Policy
 

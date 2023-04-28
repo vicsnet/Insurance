@@ -6,6 +6,7 @@ import "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 contract Insurance is AccessControl, ReentrancyGuard, Ownable{
+   
     uint256 id;
     uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
     uint256 claimInsurance;
