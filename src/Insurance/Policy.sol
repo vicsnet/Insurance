@@ -27,8 +27,9 @@ contract NewCoverage is AccessControl, Ownable {
         uint256 CoverageAmount; //amount to insure
         string FamilyName;
         bool Claim;
-        bool paid;
+        bool paid; //Insurance premium is paid
         HealthDetail detailsOfhealth;
+        ClaimDetail detailsToclaim;
     }
 
     struct HealthDetail {
@@ -40,6 +41,10 @@ contract NewCoverage is AccessControl, Ownable {
         bytes FamilyHospital;
         string PolicyCoverd;
         uint FamilyNo;
+    }
+    struct ClaimDetail {
+        bool Report;
+        uint AmountToClaim;
     }
     mapping(uint => InsurancePolicy) public insurePolicy;
     mapping(address => mapping(uint => PolicyPurchase)) public policyBought;
@@ -97,10 +102,8 @@ contract NewCoverage is AccessControl, Ownable {
         uint _percentageToCover,
         uint _familyNo,
         uint[] memory _age,
-
         bool _familyHealthStatus,
         bool _smoke,
-
         string memory _familyName
     ) public {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
@@ -118,9 +121,8 @@ contract NewCoverage is AccessControl, Ownable {
         uint _insureId,
         uint _startTime,
         uint _endTime,
-        uint _amountToInsure
-    ) public // uint _periodOfCoverage
-    {
+        uint _amountToInsure // uint _periodOfCoverage
+    ) public {
         // uint id = _insureId;
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         // uint policyD = newPolicy;
@@ -177,11 +179,27 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.StartTime = timeToStart_;
         newPolicy.EndTime = timeToEnd_;
         newPolicy.CoverageAmount = _amountInsureCover;
-//         uint id_ = newPolicy.InsureId;
-// saveDetails(_premium, id_);
     }
-    function saveDetails (uint _premium, uint _insureId) internal{
+
+    function payInsurance() public{
+        
+    }
+
+    //to claim health insuraance
+    function claimHealthPolicy(
+        bool _report,
+        uint256 _amount,
+        uint _insureId
+    ) public {
+        if (_report == false) {
+            revert();
+        }
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
-        newPolicy.AmountPaid = _premium;
+        if(newPolicy.paid == false){
+            revert();
+        }
+        
+        newPolicy.detailsToclaim.Report = _report;
+        newPolicy.detailsToclaim.AmountToClaim = _amount;
     }
 }
