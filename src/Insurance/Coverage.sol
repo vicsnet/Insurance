@@ -5,12 +5,17 @@ import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract Cover is AccessControl, Ownable {
+    
+    
     uint256 insureId;
     uint256 private constant MINIMUM_POLICY_DURATION = 1 weeks; // minimum period in which insurance covers
     uint256 private constant MAXIMUM_POLICY_DURATION = 365 days; // maximum period in which insurance covers
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MAJOR_ADMIN = keccak256("MAJOR_ADMIN");
     // Struct to create Insurance Policy
+
+    ///////     EVENTS      ///////////
+
 
     struct InsurancePolicy {
         //uint policyId; //for tracking each policy
@@ -133,7 +138,7 @@ contract Cover is AccessControl, Ownable {
     ) external returns (uint deductible) {
         uint presentTime = block.timestamp;
         uint maxTime = insurePolicy[_insureId].MaximumPeriod;
-        uint _coveragPeriod = presentTime + _endTime;
+        uint _coveragePeriod = presentTime + _endTime;
 
         if ((presentTime + _endTime) > maxTime) revert();
 
@@ -143,7 +148,7 @@ contract Cover is AccessControl, Ownable {
         // for Age 40%
 
         uint riskFactor;
-        uint timeFactor = (_coveragPeriod / maxTime) * 1;
+        uint timeFactor = (_coveragePeriod / maxTime) * 1;
         uint _premium;
         deductible;
 
@@ -193,7 +198,6 @@ contract Cover is AccessControl, Ownable {
         if(_age < 18 years) revert("Age is 18 years minimum");
 
 
-
         policy.FamilyName = _name;
         policy.policy.startTime = _startTime;
         policy.EndTime = _endTime;
@@ -201,6 +205,8 @@ contract Cover is AccessControl, Ownable {
         policy.PercentageToCover = _coverage;
         policy.age = _age;
         policy.policyCovered = _policyCovered;
+
+
     }
 
     // claim Health Insurance
