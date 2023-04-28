@@ -1,8 +1,8 @@
 // // SPDX-License-Identifier: MIT
 // pragma solidity ^0.8.18;
 
-// import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
-
+// // import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
+// import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 // contract StablecoinInsurance {
 //     IERC20 public stablecoin;
 //     uint public depegThreshold;
@@ -82,8 +82,8 @@
 //         require(policy.active == false, "Policy is still active");
 //         return payouts[_policyId] > 0;
 
-//         emit ClaimValidated( msg.sender, policy.amount, block.timestamp );
-//     }
+        emit ClaimValidated( msg.sender, policy.amount, block.timestamp );
+    }
     
 //     function claimPayout(uint _policyId) external {
 //         uint payout = payouts[_policyId];
@@ -92,8 +92,8 @@
 //         payouts[_policyId] = 0;
 //         stablecoin.transfer(msg.sender, payout);
 
-//         emit ClaimPaidOut( msg.sender, payout.amount, block.timestamp );
-//     }
+        emit ClaimPaidOut( msg.sender, payout.amount, block.timestamp );
+    }
     
 //     function cancelPolicy(uint _policyId) external {
 //         Policy storage policy = policies[_policyId];

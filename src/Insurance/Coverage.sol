@@ -6,12 +6,11 @@ import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 
 contract Cover is AccessControl, Ownable{
-
-    uint256 insureId;
-    uint256 private constant MINIMUM_POLICY_DURATION = 1 weeks; // minimum period in which insurance covers
-    uint256 private constant MAXIMUM_POLICY_DURATION = 365 days; // maximum period in which insurance covers
-    bytes32 public constant ADMIN_ROLE = keccak256("NEO_ADMIN");
-    bytes32 public constant MAJOR_ADMIN= keccak256("MAJORADMIN");
+uint256 insureId;
+uint256 private constant MINIMUM_POLICY_DURATION = 1 weeks; // minimum period in which insurance covers
+uint256 private constant MAXIMUM_POLICY_DURATION = 365 days; // maximum period in which insurance covers
+bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+bytes32 public constant MAJOR_ADMIN= keccak256("MAJOR_ADMIN");
 // Struct to create Insurance Policy
 
     struct InsurancePolicy{
@@ -29,7 +28,16 @@ contract Cover is AccessControl, Ownable{
         uint PercentageToCover; //percentage of premium to buy which determine deductible
         uint startTime; //when deductible start
         uint EndTime;  //when deductible ends in weeks
-        bool claim;
+        bool Claim; //has insurance claim been filed this should be enum
+        string FamilyName;
+        string[] FamilyHealthStatus;
+        bytes FamilyHospital;
+        string[] prescription;
+        uint[] Gender;
+        uint[] Ages;
+        uint deductible; //percentage of deductible
+        bool paid; //Insurance policy paid
+        string policyCoverd;
     }
 
     mapping(uint => InsurancePolicy) public insurePolicy;
@@ -38,14 +46,13 @@ contract Cover is AccessControl, Ownable{
     InsurancePolicy[] public arrayPolicy;
     address[] public admins;
 
-
-    // function setMajorAdmin() external onlyOwner {
-    //     _setupRole(MAJOR_ADMIN, msg.sender);
-    // }
+    constructor() {
+        Admin = msg.sender;
+    }
 
 // Register Admin
     function registerAdmin(address _newAdmin) external onlyOwner {
-        if(_newAdmin == address(0x0)) revert("Address zero detected");
+        if(_newAdmin == address(0x0)) revert("ADDRESS_ZERO_REVERTED");
         _setupRole(ADMIN_ROLE, _newAdmin);
         admins.push(_newAdmin);
     }
@@ -61,6 +68,8 @@ contract Cover is AccessControl, Ownable{
 // create an insurance policy
 // Only chosen Admin can create Insurance Policy
 function createInsurancePolicy(string memory _policyName, string [] memory _agreement, string[] memory _policyOffer, uint _minimumPeriod, uint _maximumPeriod) external onlyRole(ADMIN_ROLE){
+   if(_minimumPeriod < MAXIMUM_POLICY_DURATION) revert();
+   if(_maximumPeriod > MAXIMUM_POLICY_DURATION) revert();
     insureId +=1;
 
     InsurancePolicy storage createPolicy = insurePolicy[insureId];
@@ -78,11 +87,16 @@ function createInsurancePolicy(string memory _policyName, string [] memory _agre
 
 
 // buy Automobile policy
-function buyAutoPolicy() external {
-
-}
 
 //buy Health Policy
+function buyHealth(string calldata _familyName, uint _amount, uint _insureId, uint _endTime, uint _startTime, uint _coverage, uint _plan, string memory _policyCovered, uint[] calldata _age ) external returns(uint deductible){
+uint presentTime = block.timestamp;
+uint maxTime = insurePolicy[_insureId].MaximumPeriod;
+if((presentTime + _endTime) > maxTime ) revert();
+
+
+
+}
 
 //claim Automobile insurance
 
