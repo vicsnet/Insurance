@@ -17,7 +17,7 @@ contract Cover is AccessControl, Ownable {
         string PolicyName; //insurance Name
         bool PolicyActive; //is this Policy still Active
         bytes Agreement;
-        bytes PolicyOffer; //determine the type of Policy to buy 
+        bytes PolicyOffer; //determine the type of Policy to buy
         uint MinimumPeriod; // minimum period in which insurance covers in days
         uint MaximumPeriod; // maximum period in days
     }
@@ -27,14 +27,15 @@ contract Cover is AccessControl, Ownable {
         uint InsureId;
         uint PercentageToCover; //percentage of premium to buy which determine deductible
         uint StartTime; //when deductible start
-        uint EndTime;  //when deductible ends in weeks
+        uint EndTime; //when deductible ends in weeks
         uint deductible; //percentage of deductible
         uint AmountPaid; //premium to pay or paid
         uint FamilyNo; //no in family
+        uint age; //
         uint CoverageAmount; //the amount you want the insurance policy to cover
         uint[] Ages; //Ages of the people in family
         string FamilyName; //The Family Name
-        string PolicyCoverd; // for health Purpose single, Extended family, Family
+        string PolicyCovered; // for health Purpose single, Extended family, Family
         string[] Gender; //members gender
         string[] prescription; //on any prescription
         bytes FamilyHospital;
@@ -42,9 +43,12 @@ contract Cover is AccessControl, Ownable {
         bool Claim; //has insurance claim been filed this should be enum
         bool paid; //Insurance policy paid
         string policyCovered;
-        bool Smoke; 
+        bool Smoke;
     }
-    enum ClaimProcess {item1, item2 }
+    enum ClaimProcess {
+        item1,
+        item2
+    }
 
     mapping(uint => InsurancePolicy) public insurePolicy;
     mapping(address => mapping(uint => PolicyPurchase)) public policyBought;
@@ -105,84 +109,93 @@ contract Cover is AccessControl, Ownable {
 
     // buy Automobile policy
 
+    // Age: 40%
+    // Gender: 10%
+    // BMI: 20%
+    // Smoking status: 20%
+    // Family history: 10%
+    //buy Health Policy
+    function buyHealth(
+        string calldata _familyName,
+        uint _amount,
+        uint _insureId,
+        uint _endTime,
+        uint _coverage,
+        string memory _policyCovered,
+        uint[] calldata _age,
+        string[] calldata _gender,
+        uint _familyNo,
+        bool _familyHealthStatus,
+        string[] memory _prescription,
+        string memory _familyHospitalName,
+        uint _coverageAmount,
+        bool _smoke
+    ) external returns (uint deductible) {
+        uint presentTime = block.timestamp;
+        uint maxTime = insurePolicy[_insureId].MaximumPeriod;
+        uint _coveragPeriod = presentTime + _endTime;
 
-// Age: 40%
-// Gender: 10%
-// BMI: 20%
-// Smoking status: 20%
-// Family history: 10%
-//buy Health Policy
-function buyHealth(string calldata _familyName, uint _amount, uint _insureId, uint _endTime, uint _coverage, string memory _policyCovered, uint[] calldata _age, string[] calldata _gender, uint _familyNo, bool _familyHealthStatus, string[] memory _prescription, string memory _familyHospitalName, uint _coverageAmount, bool _smoke ) external returns(uint deductible){
+        if ((presentTime + _endTime) > maxTime) revert();
 
-uint presentTime = block.timestamp;
-uint maxTime = insurePolicy[_insureId].MaximumPeriod;
-uint _coveragPeriod = presentTime + _endTime;
+        // for gender everyone has 10%
+        // for BMI everyone has 20%
+        // for smoking status 20%
+        // for Age 40%
 
-if((presentTime + _endTime) > maxTime ) revert();
+        uint riskFactor;
+        uint timeFactor = (_coveragPeriod / maxTime) * 1;
+        uint _premium;
+        deductible;
 
-// for gender everyone has 10%
-// for BMI everyone has 20%
-// for smoking status 20%
-// for Age 40%
-
-uint riskFactor;
-uint timeFactor = (_coveragPeriod / maxTime) * 1 ;
-uint _premium;
-deductible;
-
-
-
-bytes memory _hospitalName = abi.encode(_familyHospitalName);
-PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
-newPolicy.InsureId = _insureId;
-newPolicy.PercentageToCover = _coverage;
-newPolicy.StartTime = presentTime;
-newPolicy.EndTime = presentTime + _endTime;
-newPolicy.AmountPaid = _amount;
-newPolicy.FamilyNo = _familyNo;
-newPolicy.Ages = _age;
-newPolicy.FamilyName = _familyName;
-newPolicy.PolicyCoverd = _policyCovered;
-newPolicy.FamilyHealthStatus = _familyHealthStatus;
-newPolicy.prescription = _prescription;
-newPolicy.FamilyHospital = _hospitalName;
-newPolicy.Gender = _gender;
-newPolicy.CoverageAmount = _coverageAmount;
-newPolicy.Smoke = _smoke;
-
-
-
-}
+        bytes memory _hospitalName = abi.encode(_familyHospitalName);
+        PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+        newPolicy.InsureId = _insureId;
+        newPolicy.PercentageToCover = _coverage;
+        newPolicy.StartTime = presentTime;
+        newPolicy.EndTime = presentTime + _endTime;
+        newPolicy.AmountPaid = _amount;
+        newPolicy.FamilyNo = _familyNo;
+        newPolicy.Ages = _age;
+        newPolicy.FamilyName = _familyName;
+        newPolicy.PolicyCoverd = _policyCovered;
+        newPolicy.FamilyHealthStatus = _familyHealthStatus;
+        newPolicy.prescription = _prescription;
+        newPolicy.FamilyHospital = _hospitalName;
+        newPolicy.Gender = _gender;
+        newPolicy.CoverageAmount = _coverageAmount;
+        newPolicy.Smoke = _smoke;
+    }
 
     //claim Automobile insurance
     function buyAutoInsurance(
         string calldata _name,
-        uint _premium,
         uint _insureId,
         uint _startTime,
         uint _endTime,
         uint _coverage,
-        uint _plan,
+        uint _coverageAmount,
         uint calldata _age,
-        string calldata _driversLicense_ID,
         string calldata _policyCovered
-
-    ) external returns(uint deductible) {
+    ) external returns (uint deductible) {
         policyBought storage policy = policyBought[msg.sender][_insureId];
-        
+
         bytes32 zerohash = keccak256("");
         uint presentTime = block.timestamp;
         uint maxTime = insurePolicy[_insureId].MaximumPeriod;
-        if ((presentTime + _endTime) > maxTime) revert('Time exceeds max coverage period for policy');
-        if(keccak256(_name) == zerohash) revert("Name cannot be blank");
-        if(keccak256(_policyCovered) == zerohash) revert("Policy covered cannot be blank");
-        if(keccak256(_driversLicense_ID) == zerohash) revert("Driver's license ID cannot be blank");
+        if ((presentTime + _endTime) > maxTime)
+            revert("Time exceeds max coverage period for policy");
+        if (keccak256(_name) == zerohash) revert("Name cannot be blank");
+        if (keccak256(_policyCovered) == zerohash)
+            revert("Policy covered cannot be blank");
+        if (keccak256(_driversLicense_ID) == zerohash)
+            revert("Driver's license ID cannot be blank");
 
         policy.FamilyName = _name;
-        policy.
-        policy.startTime = _startTime;
+        policy.policy.startTime = _startTime;
         policy.EndTime = _endTime;
-        policy.
+        policy.CoverageAmount = _coverageAmount;
+        policy.PercentageToCover = _coverage;
+        policy.age = _age;
         policy.policyCovered = _policyCovered;
     }
 
