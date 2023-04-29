@@ -5,9 +5,11 @@ import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract NewCoverage is AccessControl, Ownable {
+    
     uint256 insureId;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MAJOR_ADMIN = keccak256("MAJOR_ADMIN");
+    
     struct InsurancePolicy {
         string PolicyName; //insurance Name
         bool PolicyActive; //is this Policy still Active
@@ -80,14 +82,15 @@ contract NewCoverage is AccessControl, Ownable {
         createPolicy.MinimumPeriod = _minimumPeriod;
         createPolicy.MaximumPeriod = _maximumPeriod;
 
-        InsurancePolicy memory newPolicy = InsurancePolicy({
-            PolicyName: _policyName,
-            PolicyActive: true,
-            Agreement: abi.encode(_agreement),
-            PolicyOffer: abi.encode(_policyOffer),
-            MinimumPeriod: _minimumPeriod,
-            MaximumPeriod: _maximumPeriod
-        });
+        // InsurancePolicy memory newPolicy = InsurancePolicy({
+        //     PolicyName: _policyName,
+        //     PolicyActive: true,
+        //     Agreement: abi.encode(_agreement),
+        //     PolicyOffer: abi.encode(_policyOffer),
+        //     MinimumPeriod: _minimumPeriod,
+        //     MaximumPeriod: _maximumPeriod
+        // });  I DONT THINK WE NEED TO ASSIGN VALUES TO THE STRUCT TWICE
+
         arrayPolicy.push(newPolicy);
     }
 
