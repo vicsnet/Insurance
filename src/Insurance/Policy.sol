@@ -6,8 +6,12 @@ import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract NewCoverage is AccessControl, Ownable {
     uint256 insureId;
+     uint256 DAOFEE;
+    uint256 numOfProposals;
+
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MAJOR_ADMIN = keccak256("MAJOR_ADMIN");
+      uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
     struct InsurancePolicy {
         string PolicyName; //insurance Name
         bool PolicyActive; //is this Policy still Active
@@ -29,6 +33,7 @@ contract NewCoverage is AccessControl, Ownable {
         string FamilyName;
         ClaimStatus Claim;
         bool paid; //Insurance premium is paid
+
         HealthDetail detailsOfhealth;
         ClaimDetail detailsToclaim;
     }
@@ -50,9 +55,38 @@ contract NewCoverage is AccessControl, Ownable {
     struct ClaimDetail {
         bool Report;
         uint AmountToClaim;
+        uint ValidateFor; //admin validate claim
+        uint Validateagainst; //admin validate against
+    }
+
+        struct DAOProposal {
+        uint256 id;
+        uint256 amount;
+        uint256 livePeriod;
+        uint256 votesFor;
+        uint256 votesAgainst;
+        string description;
+        bool votingPassed;
+        bool paid;
+        address proposer;
+        address paidBy;
+        address AdminPaidTo;
+
     }
     mapping(uint => InsurancePolicy) public insurePolicy;
     mapping(address => mapping(uint => PolicyPurchase)) public policyBought;
+    //to display all policy for a particular address
+    mapping(address =>PolicyPurchase[]) public ArrayPolicyPurchase;
+    
+    // to display for Admins 
+    PolicyPurchase[] private  AdminArrayPolicyPurchase; 
+    mapping(address => mapping(uint256 => bool)) private hasValidateClaim;
+
+    // dao
+        mapping(uint256 => DAOProposal) private daoProposals; //mapping to hold the dao proposals
+        DAOProposal[] private arrayDaoProposals;
+            mapping(address => uint256[]) private stakeholderVotes; //to validate vote
+
 
     InsurancePolicy[] public arrayPolicy;
     address[] public admins;
@@ -63,6 +97,27 @@ contract NewCoverage is AccessControl, Ownable {
         admins.push(_newAdmin);
     }
 
+  function setDAOFee(uint _amount) public onlyOwner{
+        DAOFEE = _amount;
+    }
+    
+  // joinDAO
+    // function becomeAdmin(uint _daoFee, address _tokenContract) public payable {
+    //     address account = msg.sender;
+    //     if(DAOFEE == 0){
+    //         revert();
+    //     }
+    //     if (_daoFee < DAOFEE){
+    //         revert();
+    //     }
+    //     if(IERC20(_tokenContract).balanceOf(account) < _daoFee){
+    //         revert();
+    //     }
+    //     IERC20(_tokenContract).transferFrom(account, address(this), _daoFee);
+    //     require(msg.value > 0, "Insuficient Amount");
+    //     _setupRole(STAKEHOLDER_ROLE, account);
+    //     admins.push(msg.sender);
+    // }
     function showAdmins() external view returns (address[] memory) {
         return admins;
     }
@@ -120,6 +175,8 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.detailsOfhealth.Smoke = _smoke;
         newPolicy.FamilyName = _familyName;
         newPolicy.Insurer = msg.sender;
+          ArrayPolicyPurchase[msg.sender].push(newPolicy);
+          AdminArrayPolicyPurchase.push(newPolicy);
     }
 
     // generate health policy price
@@ -214,9 +271,11 @@ contract NewCoverage is AccessControl, Ownable {
         uint _insureId
     ) public {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+        if(block.timestamp > newPolicy.EndTime) revert();
         if (newPolicy.paid == false) {
             revert();
         }
+        if(_amount >newPolicy.CoverageAmount) revert();
         if (msg.sender != newPolicy.Insurer) {
             revert();
         }
@@ -228,4 +287,154 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.detailsToclaim.AmountToClaim = _amount;
         newPolicy.Claim = ClaimStatus.Pending;
     }
+
+//function to get all the policy bought by a user
+function getPolicyPurchases() public view returns (PolicyPurchase[] memory) {
+    return ArrayPolicyPurchase[msg.sender];
+}
+
+    // get all insurance  policy
+    function getAllPurchase() public view returns (PolicyPurchase[] memory) {
+    return AdminArrayPolicyPurchase;
+}
+
+
+    // to validate reward it determines if the insured amount is to be paid or not
+    function validateClaim(
+        uint _insureId,
+        address _rewardee,
+        bool _validate
+    ) public {
+      
+
+         if (!hasRole(ADMIN_ROLE, msg.sender)){
+            revert();
+        }
+       if ( hasValidateClaim[msg.sender][_insureId] == true) revert();
+        PolicyPurchase storage newPolicy= policyBought[_rewardee][
+            _insureId
+        ];
+        if(_validate = true){
+            newPolicy.detailsToclaim.ValidateFor +=1;
+        }
+        if(_validate = false){
+            newPolicy.detailsToclaim.Validateagainst +=1;
+        }
+    hasValidateClaim[msg.sender][_insureId] = true;
+
+    }
+
+//Validate claim
+function  ValidateClaimStatus(uint _insureId, address _rewardee) public{
+     uint _adminPercent = (admins.length * 70) / 100;
+ PolicyPurchase storage newPolicy = policyBought[_rewardee][_insureId];
+      if(newPolicy.detailsToclaim.ValidateFor < _adminPercent){
+            revert("YOU_CANT_ACCESS_NOW");
+        }
+
+    if(msg.sender != _rewardee){
+        revert();
+    }
+  if(newPolicy.detailsToclaim.ValidateFor > newPolicy.detailsToclaim.Validateagainst){
+
+     newPolicy.Claim = ClaimStatus.Approved;
+  }
+  else{
+    newPolicy.Claim= ClaimStatus.Rejected;
+  }
+}
+
+//function to collect claim
+    function ClaimReward(uint _insureId, address _rewardee) public {
+        uint _adminPercent = (admins.length * 70) / 100;
+
+    if(msg.sender != _rewardee){
+        revert();
+    }
+
+        PolicyPurchase storage _newPolicy = policyBought[_rewardee][
+            _insureId
+        ];
+        if(_newPolicy.detailsToclaim.ValidateFor < _adminPercent){
+            revert("YOU_CANT_WITHDRAW_CLAIM_NOT_ACCEPTED");
+        }
+        if( _newPolicy.Claim != ClaimStatus.Approved){
+            revert("CLAIM_REJECTED");
+        }
+
+
+        uint AmountLeft = _newPolicy.CoverageAmount -
+            _newPolicy.detailsToclaim.AmountToClaim;
+            _newPolicy.CoverageAmount = AmountLeft;
+
+        //logic to transfer the token worth
+
+
+
+    }
+
+
+        // create Proposal
+
+        function createProposal(
+        string calldata description,
+        uint256 amount
+    )
+        external
+    
+    {
+        if (!hasRole(ADMIN_ROLE, msg.sender)){
+            revert();
+        }
+
+        uint256 proposalId = numOfProposals + 1;
+        DAOProposal storage proposal = daoProposals[proposalId];
+        proposal.id = proposalId;
+        proposal.proposer = payable(msg.sender);
+        proposal.description = description;
+        proposal.amount = amount;
+        proposal.livePeriod = block.timestamp + MINIMUM_VOTING_PERIOD;
+arrayDaoProposals.push(proposal);
+    
+    }
+
+        // to vote for a proposal
+        function vote(uint256 proposalId, bool supportProposal)
+        external
+
+    {
+        DAOProposal storage daoProposal = daoProposals[proposalId];
+
+        votable(daoProposal);
+
+        if (supportProposal){
+
+         daoProposal.votesFor++;
+        }
+        else{
+
+         daoProposal.votesAgainst++;
+        }
+
+        stakeholderVotes[msg.sender].push(daoProposal.id);
+    }
+
+    function votable(DAOProposal storage daoProposal) internal {
+        if (
+            daoProposal.votingPassed ||
+            daoProposal.livePeriod <= block.timestamp
+        ) {
+            daoProposal.votingPassed = true;
+            revert("Voting period has passed on this proposal");
+        }
+
+        uint256[] memory tempVotes = stakeholderVotes[msg.sender];
+        for (uint256 votes = 0; votes < tempVotes.length; votes++) {
+            if (daoProposal.id == tempVotes[votes])
+                revert("This stakeholder already voted on this proposal");
+        }
+    }
+
+
+
 }
