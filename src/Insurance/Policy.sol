@@ -325,17 +325,10 @@ contract NewCoverage is AccessControl, Ownable {
         policyBought storage policy = policyBought[msg.sender][_insureId];
 
         bytes32 zerohash = keccak256("");
-        // uint presentTime = block.timestamp;
-        // uint maxTime = insurePolicy[_insureId].MaximumPeriod;
-        // if ((presentTime + _endTime) > maxTime)
-        //     revert("Time exceeds max coverage period for policy");
         if (keccak256(_name) == zerohash) revert("Name cannot be blank");
         if (keccak256(_policyCovered) == zerohash)
             revert("Policy covered cannot be blank");
         if(keccak256(_gender) == zerohash) revert("Gender cannot be blank");
-        // if(_startTime < presentTime) revert("Time already past");
-        // if(_coverage <= 0) revert("Invalid coverage amount");
-        // if(_coverageAmount <= 0) revert("Invalid coverage amount");
         if(_drivingYears <= 0) revert("Invalid age");
         if(_age < 18 years) revert("Age is 18 years minimum");
 
@@ -369,7 +362,7 @@ contract NewCoverage is AccessControl, Ownable {
         uint timeToStart_ = block.timestamp + _startTime;
         uint timeToEnd_ = timeToStart_ + _endTime;
         
-        
+
     }
 
     // claim Health Insurance
