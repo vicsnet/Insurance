@@ -28,7 +28,7 @@ contract InsuranceTest is Test {
         newCoverage.verifyAdmin(Admin);
     }
 
-    uint[] age = [45, 50, 64];
+    uint[] age = [45];
 
     function test_Misc2() public {
         test_registerAdmin();
@@ -52,7 +52,7 @@ contract InsuranceTest is Test {
             1,
             age,
             true,
-            true,
+            false,
             "Adeyemi Samuel"
         );
     }

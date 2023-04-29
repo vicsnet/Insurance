@@ -222,7 +222,7 @@ contract NewCoverage is AccessControl, Ownable {
         bool _smoke = newPolicy.detailsOfhealth.Smoke;
         bool _familyHealthStatus = newPolicy.detailsOfhealth.FamilyHealthStatus;
         //determine deductible to be paid
-        uint coverToPay = (newPolicy.CoverageAmount * 1) / 100;
+        uint coverToPay = (_amountToInsure * 1) / 100;
         uint _amountInsureCover = _amountToInsure;
         uint256 determineAmount = _amountInsureCover * coverToPay;
         newPolicy.deductible = determineAmount;
@@ -236,28 +236,20 @@ contract NewCoverage is AccessControl, Ownable {
             ageSum = ageSum + _age[i];
         }
         if (_smoke == true) {
-            uint smoke_factor = uint256(1 * 200) / 1000;
-            smokingFactor = smoke_factor;
-            // return smoke_factor;
+            smokingFactor = 2;
         }
         if (_smoke == false) {
-            uint smoke_factor = uint256(0 * 20) / 100;
-            smokingFactor = smoke_factor;
+            smokingFactor = 0 ;
         }
         if (_familyHealthStatus == true) {
-            uint _healthFactor = uint256(1 * 10) / 100;
-            familyHealthFactor = _healthFactor;
+            familyHealthFactor = 1;
         }
         if (_familyHealthStatus == false) {
-            uint _healthFactor = uint256(1 * 10) / 100;
-            familyHealthFactor = _healthFactor;
+            familyHealthFactor = 0;
+
         }
 
-        uint256 riskFactor = ((ageSum) * (uint256(40 * 1) / 100)) ;
-            // (uint256(10 * 1) / 100) +
-            // (uint256(20 * 1) / 100) +
-            // smokingFactor +
-            // familyHealthFactor;
+        uint256 riskFactor = ((ageSum * uint256(40 * 1)) / 100) + 1 + 2 + smokingFactor + familyHealthFactor;
 
         // uint timeFactor = (timeToEnd_ / 365 days) * 1;
 
@@ -269,10 +261,11 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.EndTime = timeToEnd_;
         newPolicy.CoverageAmount = _amountInsureCover;
         
-        return (uint(40 * 1) / 100);
+        // return (uint(40 * 1) / 100);
         // return smokingFactor;
-        // return _premium;
+        return _premium;
         // return ageSum;
+        // return riskFactor;
     }
 
     function payInsurance(uint _amount, uint _insureId) public {
