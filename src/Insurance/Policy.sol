@@ -33,9 +33,9 @@ contract NewCoverage is AccessControl, Ownable {
         uint256 CoverageAmount; //amount to insure
         address Insurer; //
         string FamilyName;
-        ClaimStatus Claim;
         bool paid; //Insurance premium is paid
 
+        ClaimStatus Claim;
         HealthDetail detailsOfhealth;
         ClaimDetail detailsToclaim;
     }
@@ -46,7 +46,7 @@ contract NewCoverage is AccessControl, Ownable {
     }
     struct HealthDetail {
         bool Smoke;
-        bool FamilyHealthStatus;
+        bool FamilyHealthStatus; //what exactly are we checking here?
         string[] Gender;
         string[] prescription;
         uint[] age;
@@ -172,7 +172,11 @@ contract NewCoverage is AccessControl, Ownable {
         bool _familyHealthStatus,
         bool _smoke,
         string memory _familyName
-    ) public {
+    ) external {
+        if(_percentageToCover <= 0) revert("Invalid value [percentageToCover]");
+        if(_familyNo <= 0) revert("Invalid value [familyNo]");
+        if(_age <= 0) revert("Invalid value [age]");
+
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         newPolicy.InsureId = _insureId;
         newPolicy.PercentageToCover = _percentageToCover;
