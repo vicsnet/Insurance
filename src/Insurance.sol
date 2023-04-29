@@ -5,7 +5,6 @@ import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-<<<<<<< HEAD
 contract Insurance {
     uint id;
     uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
@@ -13,7 +12,6 @@ contract Insurance {
     struct Cover{
         // Are we not to be the one to decide the name of the POLICY???
         string PolicyName; //Policy Name 
-=======
 contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     uint256 id;
     uint256 claimInsurance;
@@ -29,7 +27,6 @@ contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     // Policy
     struct Cover {
         string PolicyName; //Policy Name
->>>>>>> master
         uint PolicyPercent; //Annual Rate
         bool PolicyActive; //to know if the policy is still in pogress
         bytes32 Agreement;
@@ -47,16 +44,13 @@ contract Insurance is AccessControl, ReentrancyGuard, Ownable{
         address PremiumBuyerAddr; //address of the premium purchaser
         bool Paid;
         bool SubmitClaim;
-<<<<<<< HEAD
         bool AdminVerified; 
         bool Validate; //to check if the claim is valid
-=======
         bool AdminVerified;
         bool Validate; //to check if the claim is valid
         uint ValidateCounter;
         address PremiumBuyerAddr; //address of the premium purchaser
         uint AmountToWithdraw; //Amount of Insured to withdraw
->>>>>>> master
         // mapping(address => bool) Validate; //
     }
 
@@ -75,7 +69,6 @@ contract Insurance is AccessControl, ReentrancyGuard, Ownable{
 
     }
 
-<<<<<<< HEAD
 
     // uint id;
     // uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
@@ -85,13 +78,12 @@ contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     mapping(uint => Cover) private cover; 
     Cover[] public _arrayCover; 
     uint[] public saveId; //to save the whole ids
-=======
+
     mapping(uint => Cover) private cover;
     Cover[] public _arrayCover;
     uint[] public saveId; //to save the whole ids
     mapping(uint256 => DAOProposal) private daoProposals; //mapping to hold the dao proposals
     mapping(address => uint256[]) private stakeholderVotes;
->>>>>>> master
 
 
     address[] private Admin;
@@ -137,7 +129,6 @@ function becomeAdmin() public payable{
                 isAdmin = true;
                 break;
             }
-=======
     mapping (address => uint256) public stakeHoderToken; //keeping track of stakeholder token
 
     // Events
