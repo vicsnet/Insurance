@@ -1,24 +1,36 @@
-// // SPDX-License_Identifier: MIT
+// // // SPDX-License_Identifier: MIT
 
 // pragma solidity ^0.8.13;
 // import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 // import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 // contract Cover is AccessControl, Ownable {
+    
+    
 //     uint256 insureId;
-//     // uint256 private constant MINIMUM_POLICY_DURATION = 1 weeks; // minimum period in which insurance covers
-//     // uint256 private constant MAXIMUM_POLICY_DURATION = 365 days; // maximum period in which insurance covers
+//     uint256 private constant MINIMUM_POLICY_DURATION = 1 weeks; // minimum period in which insurance covers
+//     uint256 private constant MAXIMUM_POLICY_DURATION = 365 days; // maximum period in which insurance covers
 //     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 //     bytes32 public constant MAJOR_ADMIN = keccak256("MAJOR_ADMIN");
 //     // Struct to create Insurance Policy
 
+//     ///////     EVENTS      ///////////
+
+
 //     struct InsurancePolicy {
+//         //uint policyId; //for tracking each policy
 //         string PolicyName; //insurance Name
 //         bool PolicyActive; //is this Policy still Active
 //         bytes Agreement;
 //         bytes PolicyOffer; //determine the type of Policy to buy
 //         uint MinimumPeriod; // minimum period in which insurance covers in days
 //         uint MaximumPeriod; // maximum period in days
+//     }
+
+// // struct to track when subscribers apply for claim
+//     struct ClaimDetails{
+//         uint256 AmountApplied;
+//         string Event;
 //     }
 
 //     // Struct to purchase Insurance Policy
@@ -29,40 +41,36 @@
 //         uint EndTime; //when deductible ends in weeks
 //         uint deductible; //percentage of deductible
 //         uint AmountPaid; //premium to pay or paid
-//         // uint FamilyNo; //no in family
+//         uint FamilyNo; //no in family
+//         uint age; //
 //         uint CoverageAmount; //the amount you want the insurance policy to cover
-//         // uint[] Ages; //Ages of the people in family
+//         uint[] Ages; //Ages of the people in family
 //         string FamilyName; //The Family Name
-//         // string PolicyCoverd; // for health Purpose single, Extended family, Family
-//         // string[] Gender; //members gender
-//         // string[] prescription; //on any prescription
-//         // bytes FamilyHospital;
-//         // bool FamilyHealthStatus; //the status of health includin allergy
-//         bool Claim; //has insurance claim been filed this should be enum
-//         bool paid; //Insurance policy paid
-//         // bool Smoke;
-//         HealthDetail detailsOfhealth;
-//     }
-//     // enum ClaimProcess {item1, item2 }
-
-//     struct HealthDetail{
-//         bool Smoke;
+//         string PolicyCovered; // for health Purpose single, Extended family, Family
 //         string[] Gender; //members gender
 //         string[] prescription; //on any prescription
 //         bytes FamilyHospital;
 //         bool FamilyHealthStatus; //the status of health includin allergy
-//         uint[] Ages;
-//           string PolicyCoverd; // for health Purpose single, Extended family, Family
-//            uint FamilyNo; //no in family
+//         bool Claim; //has insurance claim been filed this should be enum
+//         bool paid; //Insurance policy paid
+//         string policyCovered;
+//         bool Smoke;
+//     }
+//     enum ClaimProcess {
+//         item1,
+//         item2
 //     }
 
 //     mapping(uint => InsurancePolicy) public insurePolicy;
 //     mapping(address => mapping(uint => PolicyPurchase)) public policyBought;
+//     mapping(address => ClaimDetails) public userClaimDetails;
 
 //     InsurancePolicy[] public arrayPolicy;
 //     address[] public admins;
 
-   
+//     // constructor() {
+//     //     Admin = msg.sender;
+//     // }
 
 //     // Register Admin
 //     function registerAdmin(address _newAdmin) external onlyOwner {
@@ -88,8 +96,8 @@
 //         uint _minimumPeriod,
 //         uint _maximumPeriod
 //     ) external onlyRole(ADMIN_ROLE) {
-//         // if (_minimumPeriod < MAXIMUM_POLICY_DURATION) revert();
-//         // if (_maximumPeriod > MAXIMUM_POLICY_DURATION) revert();
+//         if (_minimumPeriod < MAXIMUM_POLICY_DURATION) revert();
+//         if (_maximumPeriod > MAXIMUM_POLICY_DURATION) revert();
 //         insureId += 1;
 
 //         InsurancePolicy storage createPolicy = insurePolicy[insureId];
@@ -112,7 +120,6 @@
 //     }
 
 //     // buy Automobile policy
-//     function buyAutoPolicy() external {}
 
 //     // Age: 40%
 //     // Gender: 10%
@@ -121,21 +128,24 @@
 //     // Family history: 10%
 //     //buy Health Policy
 //     function buyHealth(
-//         // string calldata _familyName,
+//         string calldata _familyName,
+//         uint _amount,
 //         uint _insureId,
-//         uint _startTime,
 //         uint _endTime,
 //         uint _coverage,
 //         string memory _policyCovered,
 //         uint[] calldata _age,
+//         string[] calldata _gender,
+//         uint _familyNo,
 //         bool _familyHealthStatus,
-//         // string memory _familyHospitalName,
+//         string[] memory _prescription,
+//         string memory _familyHospitalName,
 //         uint _coverageAmount,
 //         bool _smoke
-//     ) external returns (uint) {
-//         uint presentTime = _startTime + block.timestamp;
+//     ) external returns (uint deductible) {
+//         uint presentTime = block.timestamp;
 //         uint maxTime = insurePolicy[_insureId].MaximumPeriod;
-//         uint _coveragPeriod = presentTime + _endTime;
+//         uint _coveragePeriod = presentTime + _endTime;
 
 //         if ((presentTime + _endTime) > maxTime) revert();
 
@@ -143,128 +153,102 @@
 //         // for BMI everyone has 20%
 //         // for smoking status 20%
 //         // for Age 40%
-//         uint256 ageSum = 0;
-//         for (uint i = 0; i < _age.length; i++) {
-//             ageSum += _age[i];
-//         }
-//         uint ageFactor = uint256(40 * 1) / 100;
-//         uint genderFactor = uint256(10 * 1) / 100;
-//         uint BMIFactor = uint256(20 * 1) / 100;
-//         uint smokingFactor;
-//         uint familyHealthFactor;
-//         if (_smoke == true) {
-//             uint smoke_factor = uint256(1 * 20) / 100;
-//             smokingFactor = smoke_factor;
-//         }
-//         if (_smoke == false) {
-//             uint smoke_factor = uint256(0 * 20) / 100;
-//             smokingFactor = smoke_factor;
-//         }
 
-//         if (_familyHealthStatus == true) {
-//             uint _healthFactor = uint256(1 * 10) / 100;
-//             familyHealthFactor = _healthFactor;
-//         }
-//         if (_familyHealthStatus == false) {
-//             uint _healthFactor = uint256(1 * 10) / 100;
-//             familyHealthFactor = _healthFactor;
-//         }
+//         uint riskFactor;
+//         uint timeFactor = (_coveragePeriod / maxTime) * 1;
+//         uint _premium;
+//         deductible;
 
-//         uint coveragePercantage_ = uint256(_coverage *1 /100);
-//         //to determine the deductible they are paying
-//         uint256 determineAmount = _coverageAmount * coveragePercantage_;
-
-//         uint256 riskFactor = ((ageSum) * ageFactor) +
-//             genderFactor +
-//             BMIFactor +
-//             smokingFactor +
-//             familyHealthFactor;
-//         uint timeFactor = (_coveragPeriod / maxTime) * 1;
-//         uint _premium = (_coverageAmount * riskFactor) +
-//             determineAmount +
-//             (timeFactor * _coverageAmount);
-
-//         // bytes memory _hospitalName = abi.encode(_familyHospitalName);
+//         bytes memory _hospitalName = abi.encode(_familyHospitalName);
 //         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
 //         newPolicy.InsureId = _insureId;
 //         newPolicy.PercentageToCover = _coverage;
 //         newPolicy.StartTime = presentTime;
 //         newPolicy.EndTime = presentTime + _endTime;
-//         newPolicy.AmountPaid = _premium;
-//         // newPolicy.FamilyNo = _familyNo;
+//         newPolicy.AmountPaid = _amount;
+//         newPolicy.FamilyNo = _familyNo;
 //         newPolicy.Ages = _age;
-//         // newPolicy.FamilyName = _familyName;
+//         newPolicy.FamilyName = _familyName;
 //         newPolicy.PolicyCoverd = _policyCovered;
 //         newPolicy.FamilyHealthStatus = _familyHealthStatus;
-//         // newPolicy.FamilyHospital = _hospitalName;
+//         newPolicy.prescription = _prescription;
+//         newPolicy.FamilyHospital = _hospitalName;
+//         newPolicy.Gender = _gender;
 //         newPolicy.CoverageAmount = _coverageAmount;
 //         newPolicy.Smoke = _smoke;
-//         newPolicy.deductible = determineAmount;
-
-//         return determineAmount;
 //     }
 
-//     // function buyHealth(
-//     //     uint _insureId,
-//     //     uint _startTime,
-//     //     uint _endTime,
-//     //     uint _coverage,
-//     //     string memory _policyCovered,
-//     //     uint[] calldata _age,
-//     //     bool _familyHealthStatus,
-//     //     uint _coverageAmount,
-//     //     bool _smoke
-//     // ) external returns (uint) {
-//     //     uint presentTime = _startTime + block.timestamp;
-//     //     uint maxTime = insurePolicy[_insureId].MaximumPeriod;
-//     //     uint _coveragPeriod = presentTime + _endTime;
-
-//     //     if ((_startTime + _endTime) > maxTime) revert();
-
-//     //     uint riskFactor = (
-//     //         (uint256(40 * 1) / 100 * (_age.length > 0 ? _age[0] : 0)) +
-//     //         uint256(10 * 1) / 100 +
-//     //         uint256(20 * 1) / 100 +
-//     //         (_smoke ? uint256(1 * 20) / 100 : uint256(0 * 20) / 100) +
-//     //         (_familyHealthStatus ? uint256(1 * 10) / 100 : uint256(0 * 10) / 100)
-//     //     );
-        
-//     //     uint determineAmount = _coverageAmount * _coverage / 100;
-//     //     uint timeFactor = (_coveragPeriod / maxTime);
-//     //     uint premium = (_coverageAmount * riskFactor) +
-//     //         determineAmount +
-//     //         (timeFactor * _coverageAmount);
-
-//     //     PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
-
-//     //     newPolicy.InsureId = _insureId;
-//     //     newPolicy.PercentageToCover = _coverage;
-//     //     newPolicy.StartTime = presentTime;
-//     //     newPolicy.EndTime = presentTime + _endTime;
-//     //     newPolicy.AmountPaid = premium;
-//     //     newPolicy.Ages = _age;
-//     //     newPolicy.PolicyCoverd = _policyCovered;
-//     //     newPolicy.FamilyHealthStatus = _familyHealthStatus;
-//     //     newPolicy.CoverageAmount = _coverageAmount;
-//     //     newPolicy.Smoke = _smoke;
-//     //     newPolicy.deductible = determineAmount;
-
-//     //     return determineAmount;
-//     // }
-
-
 //     //claim Automobile insurance
+//     function buyAutoInsurance(
+//         string calldata _name,
+//         uint _insureId,
+//         uint _startTime,
+//         uint _endTime,
+//         uint _coverage,
+//         uint _coverageAmount,
+//         uint calldata _age,
+//         string calldata _policyCovered
+//     ) external returns (uint deductible) {
+//         policyBought storage policy = policyBought[msg.sender][_insureId];
+
+//         bytes32 zerohash = keccak256("");
+//         uint presentTime = block.timestamp;
+//         uint maxTime = insurePolicy[_insureId].MaximumPeriod;
+//         if ((presentTime + _endTime) > maxTime)
+//             revert("Time exceeds max coverage period for policy");
+//         if (keccak256(_name) == zerohash) revert("Name cannot be blank");
+//         if (keccak256(_policyCovered) == zerohash)
+//             revert("Policy covered cannot be blank");
+//         if(_startTime < presentTime) revert("Time already past");
+//         if(_coverage <= 0) revert("Invalid coverage amount");
+//         if(_coverageAmount <= 0) revert("Invalid coverage amount");
+//         if(_age < 18 years) revert("Age is 18 years minimum");
+
+//         // payment
+
+//         policy.FamilyName = _name;
+//         policy.policy.startTime = _startTime;
+//         policy.EndTime = _endTime;
+//         policy.CoverageAmount = _coverageAmount;
+//         policy.PercentageToCover = _coverage;
+//         policy.age = _age;
+//         policy.policyCovered = _policyCovered;
+
+// //         uint256 riskFactor = ((ageSum) * ageFactor) +
+// //             genderFactor +
+// //             BMIFactor +
+// //             smokingFactor +
+// //             familyHealthFactor;
+// //         uint timeFactor = (_coveragPeriod / maxTime) * 1;
+// //         uint _premium = (_coverageAmount * riskFactor) +
+// //             determineAmount +
+// //             (timeFactor * _coverageAmount);
+
+//     }
 
 //     // claim Health Insurance
 //     // if claim is once rejected you have to pay to resubmit claim
+//     function claimAutoInsurance(uint _insureId, uint256 _amount, string calldata _event ) external {
+//         policyBought storage policy = policyBought[msg.sender][_insureId];
+
+//         if(policy.deductible <= 0) revert("Deductible payment not on record");
+        
+//         uint256 totalSub = policy.CoverageAmount;
+//         userClaimDetails[msg.sender].AmountApplied = _amount;
+//         userClaimDetails[msg.sender].Event = _event;
+//     }
 
 //     // vote for a claim
 
 //     // Check if claim is Succesful or rejected
+//     function checkClaimResult() external view returns(bool){
+
+//     }
 
 //     //edit Insurance Policy
 
-//     //cancel insurance Policy
+// //cancel insurance Policy
+
 
 //     // Become an Investor
 
