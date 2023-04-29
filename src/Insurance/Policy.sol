@@ -196,11 +196,15 @@ contract NewCoverage is AccessControl, Ownable {
         uint _startTime,
         uint _endTime,
         uint _amountToInsure // uint _periodOfCoverage
-    ) public {
+    ) external {
         // uint id = _insureId;
+        if(_startTime < block.timestamp) revert("Invalid time [_startTime]");
+        if(_endTime < _startTime) revert("Invalid time [_endTime]");
+        if(_amountToInsure <= 0) revert("Invalid value [_amountToInsure]");
+        
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         if (msg.sender != newPolicy.Insurer) {
-            revert();
+            revert("Insurer record not found");
         }
         // uint policyD = newPolicy;
         uint timeToStart_ = block.timestamp + _startTime;
@@ -220,7 +224,7 @@ contract NewCoverage is AccessControl, Ownable {
         uint smokingFactor;
         uint familyHealthFactor;
         for (uint i = 0; i < _age.length; i++) {
-            ageSum += _age[i];
+            ageSum = ageSum + _age[i];
         }
         if (_smoke == true) {
             uint smoke_factor = uint256(1 * 20) / 100;
