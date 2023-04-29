@@ -35,6 +35,7 @@ contract NewCoverage is AccessControl, Ownable {
         string FamilyName;
         bool paid; //Insurance premium is paid
 
+        AutoDetail autoDetails;
         ClaimStatus Claim;
         HealthDetail detailsOfhealth;
         ClaimDetail detailsToclaim;
@@ -53,6 +54,14 @@ contract NewCoverage is AccessControl, Ownable {
         bytes FamilyHospital;
         string PolicyCoverd;
         uint FamilyNo;
+    }
+
+    struct AutoDetail {
+        string gender;
+        uint age;
+        uint drivingYears;
+        bool eyeDefect;
+        string policyCovered;
     }
 
     struct ClaimDetail {
@@ -251,9 +260,7 @@ contract NewCoverage is AccessControl, Ownable {
 
         // uint timeFactor = (timeToEnd_ / 365 days) * 1;
 
-        uint _premium = (_amountInsureCover * riskFactor) +
-            determineAmount +
-            (((timeToEnd_ / 365 days) * 1) * _amountInsureCover);
+        uint _premium = (_amountInsureCover * riskFactor) + determineAmount + (((timeToEnd_ / 365 days) * 1) * _amountInsureCover);
 
         // return _premium;
         newPolicy.AmountPaid = _premium;
@@ -301,6 +308,57 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.detailsToclaim.Report = _report;
         newPolicy.detailsToclaim.AmountToClaim = _amount;
         newPolicy.Claim = ClaimStatus.Pending;
+    }
+
+    //claim Automobile insurance
+    function regAutoInsurance(
+        uint _insureId,
+        uint _age,
+        uint _drivingYears,
+        bool _eyeDefect,
+        string calldata _name,
+        string calldata _gender,
+        string calldata _policyCovered
+    ) external returns (uint deductible) {
+        policyBought storage policy = policyBought[msg.sender][_insureId];
+
+        bytes32 zerohash = keccak256("");
+        // uint presentTime = block.timestamp;
+        // uint maxTime = insurePolicy[_insureId].MaximumPeriod;
+        // if ((presentTime + _endTime) > maxTime)
+        //     revert("Time exceeds max coverage period for policy");
+        if (keccak256(_name) == zerohash) revert("Name cannot be blank");
+        if (keccak256(_policyCovered) == zerohash)
+            revert("Policy covered cannot be blank");
+        if(keccak256(_gender) == zerohash) revert("Gender cannot be blank");
+        // if(_startTime < presentTime) revert("Time already past");
+        // if(_coverage <= 0) revert("Invalid coverage amount");
+        // if(_coverageAmount <= 0) revert("Invalid coverage amount");
+        if(_drivingYears <= 0) revert("Invalid age");
+        if(_age < 18 years) revert("Age is 18 years minimum");
+
+        // payment
+
+        policy.FamilyName = _name;
+        policy.autoDetails.gender = _gender;
+        policy.autoDetails.age = _age;
+        policy.autoDetails.drivingYears = _drivingYears;
+        policy.autoDetails.eyeDefect = _eyeDefect;
+        policy.autoDetails.policyCovered = _policyCovered;
+
+
+    }
+
+    // claim Health Insurance
+    // if claim is once rejected you have to pay to resubmit claim
+    function claimAutoInsurance(uint _insureId, uint256 _amount, string calldata _event ) external {
+        policyBought storage policy = policyBought[msg.sender][_insureId];
+
+        if(policy.deductible <= 0) revert("Deductible payment not on record");
+        
+        uint256 totalSub = policy.CoverageAmount;
+        userClaimDetails[msg.sender].AmountApplied = _amount;
+        userClaimDetails[msg.sender].Event = _event;
     }
 
 //function to get all the policy bought by a user
