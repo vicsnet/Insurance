@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -6,13 +5,13 @@ import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract Insurance {
-    uint id;
-    uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
-// Policy
-    struct Cover{
-        // Are we not to be the one to decide the name of the POLICY???
-        string PolicyName; //Policy Name 
+// contract Insurance {
+//     uint id;
+//     uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
+// // Policy
+//     struct Cover{
+//         // Are we not to be the one to decide the name of the POLICY???
+//         string PolicyName; //Policy Name 
 contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     uint256 id;
     uint256 claimInsurance;
@@ -24,7 +23,6 @@ contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     bytes32 public constant MAJOR_ADMIN= keccak256("MAJORADMIN");
     uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
     address Owner ;
-=======
 // // SPDX-License-Identifier: UNLICENSED
 // pragma solidity ^0.8.13;
 // import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -42,10 +40,8 @@ contract Insurance is AccessControl, ReentrancyGuard, Ownable{
 //     bytes32 public constant STAKEHOLDER_ROLE = keccak256("STAKEHOLDER");
 //     bytes32 public constant MAJOR_ADMIN= keccak256("MAJORADMIN");
 //     uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
->>>>>>> origin/master
     
 
-<<<<<<< HEAD
     struct PremiumPurchase {
         uint CoverId;
         uint TotalPeriod;
@@ -104,8 +100,6 @@ contract Insurance is AccessControl, ReentrancyGuard, Ownable{
     // mapping (address => PremiumPurchase) public purchaseCoverBought;
     mapping(address => mapping(uint => PremiumPurchase)) public premiumBought;
 
-<<<<<<< HEAD
-
 // Events 
     event PolicyPurchased( address indexed holder, uint256 coverAmount, uint256 premium, uint256 indexed coverid, uint256 indexed expiration );
 
@@ -143,7 +137,7 @@ function becomeAdmin() public payable{
                 isAdmin = true;
                 break;
             }
-    mapping (address => uint256) public stakeHoderToken; //keeping track of stakeholder token
+    mapping (address => uint256) stakeHoderToken; //keeping track of stakeholder token
 
     // Events
     event PolicyPurchased(
@@ -186,7 +180,6 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
     function verifyAccess() internal view{
          if (!hasRole(STAKEHOLDER_ROLE, msg.sender)){
             revert();
->>>>>>> master
         }
     }
 
@@ -237,10 +230,7 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         cover[id] = newCover;
         _arrayCover.push(newCover);
         saveId.push(id);
-<<<<<<< HEAD
 
-=======
->>>>>>> master
     }
 
     // buy premium
@@ -253,7 +243,6 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
         address _TokenContract
     ) public {
         bool isCoverId = false;
-<<<<<<< HEAD
         // ==============WHILE LOOP??????????????????????????????????
         // uint i = 0;
         // while (i < saveId.length && !isCoverId) {
@@ -266,10 +255,8 @@ event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposa
 
         for (uint i = 0; i < saveId.length; i++) {
             if (saveId[i] == _coverId) {    // random trial from anyone
-=======
         for (uint i = 0; i < saveId.length; i++) {
             if (saveId[i] == _coverId) {
->>>>>>> master
                 isCoverId = true;
                 break;
             }
@@ -441,9 +428,8 @@ IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
         uint256 amount
     )
         external
-=======
+
 //     AggregatorV3Interface internal priceFeed;
->>>>>>> origin/master
     
 //     // Policy
 //     struct Cover {
@@ -521,16 +507,14 @@ IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
 //         uint256 indexed timestamp
 //     );
 
-<<<<<<< HEAD
     // release fund
     function checkVote(uint256 proposalId)
         external
     {
         verifyAccess();
         uint _adminPercent = (Admin.length * 70) / 100;
-=======
+
 // event NewDAOProposal(address indexed proposer, uint256 amount, uint256 idProposal);
->>>>>>> origin/master
 
 //     // event PolicyCancelled( address indexed holder, uint256 refundAmount );
 
@@ -941,7 +925,7 @@ IERC20(_tokenContract).transferFrom(msg.sender, address(this), _amount);
 //     IERC20(_tokenContract).transfer(account, daoProposal.amount);
 // }
 
-// }
+}
 
 
 
