@@ -222,9 +222,9 @@ contract NewCoverage is AccessControl, Ownable {
         bool _smoke = newPolicy.detailsOfhealth.Smoke;
         bool _familyHealthStatus = newPolicy.detailsOfhealth.FamilyHealthStatus;
         //determine deductible to be paid
-        uint coverToPay = (_amountToInsure * 1) / 100;
+        uint coverToPay = (newPolicy.PercentageToCover * 1) / 100;
         uint _amountInsureCover = _amountToInsure;
-        uint256 determineAmount = _amountInsureCover * coverToPay;
+        uint256 determineAmount = coverToPay;
         newPolicy.deductible = determineAmount;
         uint256 ageSum;
         // uint ageFactor = uint256(40 * 1) / 100;
@@ -253,7 +253,7 @@ contract NewCoverage is AccessControl, Ownable {
 
         // uint timeFactor = (timeToEnd_ / 365 days) * 1;
 
-        uint _premium = (_amountInsureCover * riskFactor) + determineAmount + (((timeToEnd_ / 365 days) * 1) * _amountInsureCover);
+        uint _premium = ((_amountInsureCover * riskFactor/100)) + determineAmount + ((((timeToEnd_ / 365 days) * 1) * _amountInsureCover)/100);
 
         
         newPolicy.AmountPaid = _premium;
