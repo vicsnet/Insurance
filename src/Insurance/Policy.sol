@@ -98,7 +98,7 @@ contract NewCoverage is AccessControl, Ownable {
     mapping(uint256 => DAOProposal) private daoProposals; //mapping to hold the dao proposals
     DAOProposal[] private arrayDaoProposals;
 
-    @audit //The uint256[] is not instantiated anywhere, and if this is to track total votes, we can just have 
+    //The uint256[] is not instantiated anywhere, and if this is to track total votes, we can just have 
     // a struct member in DAOProposal called totalVotes, instead of using an array
     mapping(address => uint256[]) private stakeholderVotes; //to validate vote
 
@@ -137,19 +137,19 @@ contract NewCoverage is AccessControl, Ownable {
         return admins;
     }
 
-    function verifyAdmin(address _admin) internal view returns (bool) {
+    function verifyAdmin(address _admin) external view returns (bool) {
         return hasRole(ADMIN_ROLE, _admin);
     }
 
     function createInsurancePolicy(
         string memory _policyName,
+        string memory _policyOffer,
         string[] memory _agreement,
-        string[] memory _policyOffer,
         uint _minimumPeriod,
         uint _maximumPeriod
     ) external onlyRole(ADMIN_ROLE) {
-        // if (_minimumPeriod < MAXIMUM_POLICY_DURATION) revert();
-        // if (_maximumPeriod > MAXIMUM_POLICY_DURATION) revert();
+        if (_minimumPeriod < 1 weeks) revert();
+        if (_maximumPeriod > 52 weeks) revert();
         insureId += 1;
 
         InsurancePolicy storage createPolicy = insurePolicy[insureId];
@@ -184,7 +184,7 @@ contract NewCoverage is AccessControl, Ownable {
     ) external {
         if(_percentageToCover <= 0) revert("Invalid value [percentageToCover]");
         if(_familyNo <= 0) revert("Invalid value [familyNo]");
-        if(_age <= 0) revert("Invalid value [age]");
+        // if(_age <= 0) revert("Invalid value [age]");
 
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         newPolicy.InsureId = _insureId;
@@ -205,7 +205,7 @@ contract NewCoverage is AccessControl, Ownable {
         uint _startTime,
         uint _endTime,
         uint _amountToInsure // uint _periodOfCoverage
-    ) external {
+    ) external returns(uint256){
         // uint id = _insureId;
         if(_startTime < block.timestamp) revert("Invalid time [_startTime]");
         if(_endTime < _startTime) revert("Invalid time [_endTime]");
@@ -215,7 +215,7 @@ contract NewCoverage is AccessControl, Ownable {
         if (msg.sender != newPolicy.Insurer) {
             revert("Insurer record not found");
         }
-        // uint policyD = newPolicy;
+
         uint timeToStart_ = block.timestamp + _startTime;
         uint timeToEnd_ = timeToStart_ + _endTime;
         uint[] memory _age = newPolicy.detailsOfhealth.age;
@@ -236,8 +236,9 @@ contract NewCoverage is AccessControl, Ownable {
             ageSum = ageSum + _age[i];
         }
         if (_smoke == true) {
-            uint smoke_factor = uint256(1 * 20) / 100;
+            uint smoke_factor = uint256(1 * 200) / 1000;
             smokingFactor = smoke_factor;
+            // return smoke_factor;
         }
         if (_smoke == false) {
             uint smoke_factor = uint256(0 * 20) / 100;
@@ -252,21 +253,26 @@ contract NewCoverage is AccessControl, Ownable {
             familyHealthFactor = _healthFactor;
         }
 
-        uint256 riskFactor = ((ageSum) * (uint256(40 * 1) / 100)) +
-            (uint256(10 * 1) / 100) +
-            (uint256(20 * 1) / 100) +
-            smokingFactor +
-            familyHealthFactor;
+        uint256 riskFactor = ((ageSum) * (uint256(40 * 1) / 100)) ;
+            // (uint256(10 * 1) / 100) +
+            // (uint256(20 * 1) / 100) +
+            // smokingFactor +
+            // familyHealthFactor;
 
         // uint timeFactor = (timeToEnd_ / 365 days) * 1;
 
         uint _premium = (_amountInsureCover * riskFactor) + determineAmount + (((timeToEnd_ / 365 days) * 1) * _amountInsureCover);
 
-        // return _premium;
+        
         newPolicy.AmountPaid = _premium;
         newPolicy.StartTime = timeToStart_;
         newPolicy.EndTime = timeToEnd_;
         newPolicy.CoverageAmount = _amountInsureCover;
+        
+        return (uint(40 * 1) / 100);
+        // return smokingFactor;
+        // return _premium;
+        // return ageSum;
     }
 
     function payInsurance(uint _amount, uint _insureId) public {
@@ -322,15 +328,15 @@ contract NewCoverage is AccessControl, Ownable {
         string calldata _gender,
         string calldata _policyCovered
     ) external returns (uint deductible) {
-        policyBought storage policy = policyBought[msg.sender][_insureId];
+        PolicyPurchase storage policy = policyBought[msg.sender][_insureId];
 
         bytes32 zerohash = keccak256("");
-        if (keccak256(_name) == zerohash) revert("Name cannot be blank");
-        if (keccak256(_policyCovered) == zerohash)
+        if (keccak256(abi.encode(_name)) == zerohash) revert("Name cannot be blank");
+        if (keccak256(abi.encode(_policyCovered)) == zerohash)
             revert("Policy covered cannot be blank");
-        if(keccak256(_gender) == zerohash) revert("Gender cannot be blank");
+        if(keccak256(abi.encode(_gender)) == zerohash) revert("Gender cannot be blank");
         if(_drivingYears <= 0) revert("Invalid age");
-        if(_age < 18 years) revert("Age is 18 years minimum");
+        if(_age < 18) revert("Age is 18 years minimum");
 
         // payment
 
@@ -367,15 +373,15 @@ contract NewCoverage is AccessControl, Ownable {
 
     // claim Health Insurance
     // if claim is once rejected you have to pay to resubmit claim
-    function claimAutoInsurance(uint _insureId, uint256 _amount, string calldata _event ) external {
-        policyBought storage policy = policyBought[msg.sender][_insureId];
+    // function claimAutoInsurance(uint _insureId, uint256 _amount, string calldata _event ) external {
+    //     policyBought storage policy = policyBought[msg.sender][_insureId];
 
-        if(policy.deductible <= 0) revert("Deductible payment not on record");
+    //     if(policy.deductible <= 0) revert("Deductible payment not on record");
         
-        uint256 totalSub = policy.CoverageAmount;
-        userClaimDetails[msg.sender].AmountApplied = _amount;
-        userClaimDetails[msg.sender].Event = _event;
-    }
+    //     uint256 totalSub = policy.CoverageAmount;
+    //     userClaimDetails[msg.sender].AmountApplied = _amount;
+    //     userClaimDetails[msg.sender].Event = _event;
+    // }
 
 //function to get all the policy bought by a user
 function getPolicyPurchases() public view returns (PolicyPurchase[] memory) {
