@@ -311,6 +311,8 @@ contract NewCoverage is AccessControl, Ownable {
     }
 
     //claim Automobile insurance
+
+    // Register for auto insurance
     function regAutoInsurance(
         uint _insureId,
         uint _age,
@@ -346,7 +348,28 @@ contract NewCoverage is AccessControl, Ownable {
         policy.autoDetails.eyeDefect = _eyeDefect;
         policy.autoDetails.policyCovered = _policyCovered;
 
+        // emit some event
+    }
 
+    function getAutoInsurance(
+        uint _insureId, 
+        uint _startTime, 
+        uint _endTime, 
+        uint _amountToInsure
+        ) external {
+        if(_startTime < block.timestamp) revert("Invalid time [_startTime]");
+        if(_endTime < _startTime) revert("Invalid time [_endTime]");
+        if(_amountToInsure <= 0) revert("Invalid value [_amountToInsure]");
+
+        PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+        if (msg.sender != newPolicy.Insurer) {
+            revert("Insurer record not found");
+        }
+
+        uint timeToStart_ = block.timestamp + _startTime;
+        uint timeToEnd_ = timeToStart_ + _endTime;
+        
+        
     }
 
     // claim Health Insurance
