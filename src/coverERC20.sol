@@ -5,6 +5,7 @@ import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract coverERC20 is ERC20 {
     address Admin;
+    uint256 decimal = 1e18;
 
     constructor(
         string memory _name,
@@ -13,7 +14,8 @@ contract coverERC20 is ERC20 {
         Admin = msg.sender;
     }
 
-    function mint(address to, uint256 amount) public {
+    function mint(address to, uint256 _amount) public {
+        uint256 amount = _amount * decimal;
         _mint(to, amount);
     }
 }
