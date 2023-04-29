@@ -222,7 +222,7 @@ contract NewCoverage is AccessControl, Ownable {
         bool _smoke = newPolicy.detailsOfhealth.Smoke;
         bool _familyHealthStatus = newPolicy.detailsOfhealth.FamilyHealthStatus;
         //determine deductible to be paid
-        uint coverToPay = SafeMath.div(SafeMath.mul(newPolicy.CoverageAmount, 1) ,100);
+        uint coverToPay = (newPolicy.PercentageToCover * 1) / 100;
         uint _amountInsureCover = _amountToInsure;
         uint256 determineAmount = SafeMath.mul(_amountInsureCover,  coverToPay);
         newPolicy.deductible = determineAmount;
