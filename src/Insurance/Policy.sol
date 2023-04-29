@@ -25,13 +25,18 @@ contract NewCoverage is AccessControl, Ownable {
         uint256 deductible;
         uint256 AmountPaid; //amount to be paid
         uint256 CoverageAmount; //amount to insure
+        address Insurer; //
         string FamilyName;
-        bool Claim;
+        ClaimStatus Claim;
         bool paid; //Insurance premium is paid
         HealthDetail detailsOfhealth;
         ClaimDetail detailsToclaim;
     }
-
+    enum ClaimStatus {
+        Pending,
+        Approved,
+        Rejected
+    }
     struct HealthDetail {
         bool Smoke;
         bool FamilyHealthStatus;
@@ -114,6 +119,7 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.detailsOfhealth.FamilyHealthStatus = _familyHealthStatus;
         newPolicy.detailsOfhealth.Smoke = _smoke;
         newPolicy.FamilyName = _familyName;
+        newPolicy.Insurer = msg.sender;
     }
 
     // generate health policy price
@@ -125,6 +131,9 @@ contract NewCoverage is AccessControl, Ownable {
     ) public {
         // uint id = _insureId;
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+        if (msg.sender != newPolicy.Insurer) {
+            revert();
+        }
         // uint policyD = newPolicy;
         uint timeToStart_ = block.timestamp + _startTime;
         uint timeToEnd_ = timeToStart_ + _endTime;
@@ -181,8 +190,21 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.CoverageAmount = _amountInsureCover;
     }
 
-    function payInsurance() public{
-        
+    function payInsurance(uint _amount, uint _insureId) public {
+        PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+        if (msg.sender != newPolicy.Insurer) {
+            revert();
+        }
+        if (newPolicy.CoverageAmount > _amount) {
+            revert();
+        }
+        if (newPolicy.PercentageToCover == 0) {
+            revert();
+        }
+        if (newPolicy.paid == true) {
+            revert();
+        }
+        newPolicy.paid = true;
     }
 
     //to claim health insuraance
@@ -191,15 +213,19 @@ contract NewCoverage is AccessControl, Ownable {
         uint256 _amount,
         uint _insureId
     ) public {
+        PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+        if (newPolicy.paid == false) {
+            revert();
+        }
+        if (msg.sender != newPolicy.Insurer) {
+            revert();
+        }
         if (_report == false) {
             revert();
         }
-        PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
-        if(newPolicy.paid == false){
-            revert();
-        }
-        
+
         newPolicy.detailsToclaim.Report = _report;
         newPolicy.detailsToclaim.AmountToClaim = _amount;
+        newPolicy.Claim = ClaimStatus.Pending;
     }
 }
