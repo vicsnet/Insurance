@@ -222,11 +222,7 @@ contract NewCoverage is AccessControl, Ownable {
         bool _smoke = newPolicy.detailsOfhealth.Smoke;
         bool _familyHealthStatus = newPolicy.detailsOfhealth.FamilyHealthStatus;
         //determine deductible to be paid
-<<<<<<< HEAD
-        uint coverToPay = (_amountToInsure * 1) / 100;
-=======
         uint coverToPay = SafeMath.div(SafeMath.mul(newPolicy.CoverageAmount, 1) ,100);
->>>>>>> b19149d (not needed)
         uint _amountInsureCover = _amountToInsure;
         uint256 determineAmount = SafeMath.mul(_amountInsureCover,  coverToPay);
         newPolicy.deductible = determineAmount;
@@ -240,22 +236,6 @@ contract NewCoverage is AccessControl, Ownable {
             ageSum = SafeMath.add (ageSum , _age[i]);
         }
         if (_smoke == true) {
-<<<<<<< HEAD
-            smokingFactor = 2;
-        }
-        if (_smoke == false) {
-            smokingFactor = 0 ;
-        }
-        if (_familyHealthStatus == true) {
-            familyHealthFactor = 1;
-        }
-        if (_familyHealthStatus == false) {
-            familyHealthFactor = 0;
-
-        }
-
-        uint256 riskFactor = ((ageSum * uint256(40 * 1)) / 100) + 1 + 2 + smokingFactor + familyHealthFactor;
-=======
             uint smoke_factor = SafeMath.div(SafeMath.mul(1, 20), 100);
             smokingFactor = smoke_factor;
             // return smoke_factor;
@@ -274,7 +254,6 @@ contract NewCoverage is AccessControl, Ownable {
             familyHealthFactor = _healthFactor;
         }
 
->>>>>>> b19149d (not needed)
 
 // uint timeFactor = (timeToEnd_ / 365 days) * 1;
         // uint256 riskFactor = (ageSum *(uint256(40 * 1) / 100))+
@@ -299,13 +278,8 @@ uint _premium = SafeMath.add(SafeMath.add(SafeMath.mul(_amountInsureCover, riskF
         newPolicy.CoverageAmount = _amountInsureCover;
         
         // return (uint(40 * 1) / 100);
-<<<<<<< HEAD
-        // return smokingFactor;
-        return _premium;
-=======
         return riskFactor;
         // return _premium;
->>>>>>> b19149d (not needed)
         // return ageSum;
         // return riskFactor;
     }
