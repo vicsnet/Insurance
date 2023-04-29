@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
-import "lib/openzeppelin-contracts/contracts/utils/math/SafeMath.sol";
+
 contract NewCoverage is AccessControl, Ownable {
     
     uint256 insureId;
@@ -222,9 +222,9 @@ contract NewCoverage is AccessControl, Ownable {
         bool _smoke = newPolicy.detailsOfhealth.Smoke;
         bool _familyHealthStatus = newPolicy.detailsOfhealth.FamilyHealthStatus;
         //determine deductible to be paid
-        uint coverToPay = SafeMath.div(SafeMath.mul(newPolicy.CoverageAmount, 1) ,100);
+        uint coverToPay = (_amountToInsure * 1) / 100;
         uint _amountInsureCover = _amountToInsure;
-        uint256 determineAmount = SafeMath.mul(_amountInsureCover,  coverToPay);
+        uint256 determineAmount = _amountInsureCover * coverToPay;
         newPolicy.deductible = determineAmount;
         uint256 ageSum;
         // uint ageFactor = uint256(40 * 1) / 100;
@@ -233,43 +233,27 @@ contract NewCoverage is AccessControl, Ownable {
         uint smokingFactor;
         uint familyHealthFactor;
         for (uint i = 0; i < _age.length; i++) {
-            ageSum = SafeMath.add (ageSum , _age[i]);
+            ageSum = ageSum + _age[i];
         }
         if (_smoke == true) {
-            uint smoke_factor = SafeMath.div(SafeMath.mul(1, 20), 100);
-            smokingFactor = smoke_factor;
-            // return smoke_factor;
+            smokingFactor = 2;
         }
         if (_smoke == false) {
-            uint smoke_factor = SafeMath.div(SafeMath.mul(0, 20), 100);
-           
-            smokingFactor = smoke_factor;
+            smokingFactor = 0 ;
         }
         if (_familyHealthStatus == true) {
-            uint _healthFactor = SafeMath.div(SafeMath.mul(1 , 10), 100);
-            familyHealthFactor = _healthFactor;
+            familyHealthFactor = 1;
         }
         if (_familyHealthStatus == false) {
-            uint _healthFactor = SafeMath.div(SafeMath.mul(1 , 10), 100);
-            familyHealthFactor = _healthFactor;
+            familyHealthFactor = 0;
+
         }
 
+        uint256 riskFactor = ((ageSum * uint256(40 * 1)) / 100) + 1 + 2 + smokingFactor + familyHealthFactor;
 
-// uint timeFactor = (timeToEnd_ / 365 days) * 1;
-        // uint256 riskFactor = (ageSum *(uint256(40 * 1) / 100))+
-        //     (uint256(10 * 1) / 100) +
-        //     (uint256(20 * 1) / 100) +
-        //     smokingFactor +
-        //     familyHealthFactor;
+        // uint timeFactor = (timeToEnd_ / 365 days) * 1;
 
-    
-
-        
-
-        // uint _premium = (_amountInsureCover * riskFactor) + determineAmount + (((timeToEnd_ / 365 days) * 1) * _amountInsureCover);
-        uint256 riskFactor = SafeMath.add(SafeMath.add(SafeMath.add(ageSum *(uint256(40 * 1) / 100), (uint256(10 * 1) / 100)), (uint256(20 * 1) / 100)), SafeMath.add(smokingFactor, familyHealthFactor));
-
-uint _premium = SafeMath.add(SafeMath.add(SafeMath.mul(_amountInsureCover, riskFactor), determineAmount), SafeMath.mul((SafeMath.div(timeToEnd_, 365 days)), _amountInsureCover));
+        uint _premium = (_amountInsureCover * riskFactor) + determineAmount + (((timeToEnd_ / 365 days) * 1) * _amountInsureCover);
 
         
         newPolicy.AmountPaid = _premium;
@@ -278,13 +262,11 @@ uint _premium = SafeMath.add(SafeMath.add(SafeMath.mul(_amountInsureCover, riskF
         newPolicy.CoverageAmount = _amountInsureCover;
         
         // return (uint(40 * 1) / 100);
-        return riskFactor;
-        // return _premium;
+        // return smokingFactor;
+        return _premium;
         // return ageSum;
         // return riskFactor;
     }
-
-
 
     function payInsurance(uint _amount, uint _insureId) public {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
@@ -330,57 +312,57 @@ uint _premium = SafeMath.add(SafeMath.add(SafeMath.mul(_amountInsureCover, riskF
     //claim Automobile insurance
 
     // Register for auto insurance
-    // function regAutoInsurance(
-    //     uint _insureId,
-    //     uint _age,
-    //     uint _drivingYears,
-    //     bool _eyeDefect,
-    //     string calldata _name,
-    //     string calldata _gender,
-    //     string calldata _policyCovered
-    // ) external returns (uint deductible) {
-    //     PolicyPurchase storage policy = policyBought[msg.sender][_insureId];
+    function regAutoInsurance(
+        uint _insureId,
+        uint _age,
+        uint _drivingYears,
+        bool _eyeDefect,
+        string calldata _name,
+        string calldata _gender,
+        string calldata _policyCovered
+    ) external returns (uint deductible) {
+        PolicyPurchase storage policy = policyBought[msg.sender][_insureId];
 
-    //     bytes32 zerohash = keccak256("");
-    //     if (keccak256(abi.encode(_name)) == zerohash) revert("Name cannot be blank");
-    //     if (keccak256(abi.encode(_policyCovered)) == zerohash)
-    //         revert("Policy covered cannot be blank");
-    //     if(keccak256(abi.encode(_gender)) == zerohash) revert("Gender cannot be blank");
-    //     if(_drivingYears <= 0) revert("Invalid age");
-    //     if(_age < 18) revert("Age is 18 years minimum");
+        bytes32 zerohash = keccak256("");
+        if (keccak256(abi.encode(_name)) == zerohash) revert("Name cannot be blank");
+        if (keccak256(abi.encode(_policyCovered)) == zerohash)
+            revert("Policy covered cannot be blank");
+        if(keccak256(abi.encode(_gender)) == zerohash) revert("Gender cannot be blank");
+        if(_drivingYears <= 0) revert("Invalid age");
+        if(_age < 18) revert("Age is 18 years minimum");
 
-    //     // payment
+        // payment
 
-    //     policy.FamilyName = _name;
-    //     policy.autoDetails.gender = _gender;
-    //     policy.autoDetails.age = _age;
-    //     policy.autoDetails.drivingYears = _drivingYears;
-    //     policy.autoDetails.eyeDefect = _eyeDefect;
-    //     policy.autoDetails.policyCovered = _policyCovered;
+        policy.FamilyName = _name;
+        policy.autoDetails.gender = _gender;
+        policy.autoDetails.age = _age;
+        policy.autoDetails.drivingYears = _drivingYears;
+        policy.autoDetails.eyeDefect = _eyeDefect;
+        policy.autoDetails.policyCovered = _policyCovered;
 
-    //     // emit some event
-    // }
+        // emit some event
+    }
 
-    // function getAutoInsurance(
-    //     uint _insureId, 
-    //     uint _startTime, 
-    //     uint _endTime, 
-    //     uint _amountToInsure
-    //     ) external {
-    //     if(_startTime < block.timestamp) revert("Invalid time [_startTime]");
-    //     if(_endTime < _startTime) revert("Invalid time [_endTime]");
-    //     if(_amountToInsure <= 0) revert("Invalid value [_amountToInsure]");
+    function getAutoInsurance(
+        uint _insureId, 
+        uint _startTime, 
+        uint _endTime, 
+        uint _amountToInsure
+        ) external {
+        if(_startTime < block.timestamp) revert("Invalid time [_startTime]");
+        if(_endTime < _startTime) revert("Invalid time [_endTime]");
+        if(_amountToInsure <= 0) revert("Invalid value [_amountToInsure]");
 
-    //     PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
-    //     if (msg.sender != newPolicy.Insurer) {
-    //         revert("Insurer record not found");
-    //     }
+        PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+        if (msg.sender != newPolicy.Insurer) {
+            revert("Insurer record not found");
+        }
 
-    //     uint timeToStart_ = block.timestamp + _startTime;
-    //     uint timeToEnd_ = timeToStart_ + _endTime;
+        uint timeToStart_ = block.timestamp + _startTime;
+        uint timeToEnd_ = timeToStart_ + _endTime;
         
 
-    // }
+    }
 
     // claim Health Insurance
     // if claim is once rejected you have to pay to resubmit claim
