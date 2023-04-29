@@ -5,5 +5,5 @@ import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract Auto {
-    
+
 }

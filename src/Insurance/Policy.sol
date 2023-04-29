@@ -1,70 +1,9 @@
-// SPDX-License_Identifier: MIT
-
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
-contract NewCoverage is AccessControl, Ownable {
-    uint256 insureId;
-     uint256 DAOFEE;
-    uint256 numOfProposals;
-
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant MAJOR_ADMIN = keccak256("MAJOR_ADMIN");
-      uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
-    struct InsurancePolicy {
-        string PolicyName; //insurance Name
-        bool PolicyActive; //is this Policy still Active
-        bytes Agreement;
-        bytes PolicyOffer; //determine the type of Policy to buy
-        uint MinimumPeriod; // minimum period in which insurance covers in days
-        uint MaximumPeriod; // maximum period in days
-    }
-
-    struct PolicyPurchase {
-        uint256 InsureId;
-        uint256 PercentageToCover;
-        uint256 StartTime;
-        uint256 EndTime;
-        uint256 deductible;
-        uint256 AmountPaid; //amount to be paid
-        uint256 CoverageAmount; //amount to insure
-        address Insurer; //
-        string FamilyName;
-        ClaimStatus Claim;
-        bool paid; //Insurance premium is paid
-
-        HealthDetail detailsOfhealth;
-        ClaimDetail detailsToclaim;
-    }
-    enum ClaimStatus {
-        Pending,
-        Approved,
-        Rejected
-    }
-    struct HealthDetail {
-        bool Smoke;
-        bool FamilyHealthStatus;
-        string[] Gender;
-        string[] prescription;
-        uint[] age;
-        bytes FamilyHospital;
-        string PolicyCoverd;
-        uint FamilyNo;
-    }
-    struct ClaimDetail {
-        bool Report;
-        uint AmountToClaim;
-        uint ValidateFor; //admin validate claim
-        uint Validateagainst; //admin validate against
-    }
-
-        struct DAOProposal {
-        uint256 id;
-        uint256 amount;
-        uint256 livePeriod;
-        uint256 votesFor;
-        uint256 votesAgainst;
+contract Auto {
         string description;
         bool votingPassed;
         bool paid;
