@@ -7,12 +7,13 @@ import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 contract NewCoverage is AccessControl, Ownable {
     
     uint256 insureId;
-     uint256 DAOFEE;
+    uint256 DAOFEE;
     uint256 numOfProposals;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MAJOR_ADMIN = keccak256("MAJOR_ADMIN");
-      uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
+    uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
+
     struct InsurancePolicy {
         string PolicyName; //insurance Name
         bool PolicyActive; //is this Policy still Active
@@ -53,6 +54,7 @@ contract NewCoverage is AccessControl, Ownable {
         string PolicyCoverd;
         uint FamilyNo;
     }
+
     struct ClaimDetail {
         bool Report;
         uint AmountToClaim;
@@ -84,9 +86,12 @@ contract NewCoverage is AccessControl, Ownable {
     mapping(address => mapping(uint256 => bool)) private hasValidateClaim;
 
     // dao
-        mapping(uint256 => DAOProposal) private daoProposals; //mapping to hold the dao proposals
-        DAOProposal[] private arrayDaoProposals;
-            mapping(address => uint256[]) private stakeholderVotes; //to validate vote
+    mapping(uint256 => DAOProposal) private daoProposals; //mapping to hold the dao proposals
+    DAOProposal[] private arrayDaoProposals;
+
+    @audit //The uint256[] is not instantiated anywhere, and if this is to track total votes, we can just have 
+    // a struct member in DAOProposal called totalVotes, instead of using an array
+    mapping(address => uint256[]) private stakeholderVotes; //to validate vote
 
 
     InsurancePolicy[] public arrayPolicy;
@@ -155,7 +160,7 @@ contract NewCoverage is AccessControl, Ownable {
         //     MaximumPeriod: _maximumPeriod
         // });  I DONT THINK WE NEED TO ASSIGN VALUES TO THE STRUCT TWICE
 
-        arrayPolicy.push(newPolicy);
+        arrayPolicy.push(createPolicy);
     }
 
     // register for the health policy
@@ -177,8 +182,8 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.detailsOfhealth.Smoke = _smoke;
         newPolicy.FamilyName = _familyName;
         newPolicy.Insurer = msg.sender;
-          ArrayPolicyPurchase[msg.sender].push(newPolicy);
-          AdminArrayPolicyPurchase.push(newPolicy);
+        ArrayPolicyPurchase[msg.sender].push(newPolicy);
+        AdminArrayPolicyPurchase.push(newPolicy);
     }
 
     // generate health policy price
