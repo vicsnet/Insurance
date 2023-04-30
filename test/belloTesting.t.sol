@@ -2,27 +2,45 @@
 pragma solidity ^0.8.13;
 
 import "../lib/forge-std/src/Test.sol";
-import "../src/Counter.sol";
+import "../src/Insurance/Policy.sol";
 
-contract CounterTest is Test {
+contract PolicyTest is Test {
+    NewCoverage public policy;
+    address owner = 0x154421b5abFd5FC12b16715E91d564AA47c8DDee;
+    address admin = 0x1CCFe3B61eE85a40dB552A2B0c6BDcF4aE9B4278;
+    address anotherAdmin = 0x362923F694243E2d8d2BE4c70b6d2b463B2f6836;
+    address yetAnotherAdmin =0x362923F694243E2d8d2BE4c70b6d2b463B2f6836;
+    address buyer = 0xA6C6D11907D116308cF81C5d8d41A52E8BD7fE20;
+    address buyer1 = 0xAFD91fbf0a7297577e90e56dC17bbe452587350B;
+    string[] agreement = ["100percent deductible", "I love the policy"];
+    string[] policyOffer = ["Collision", "PIP", "Comprehensive"];
+    uint[] age = [21, 43, 52];
+
+    function setUp() public {
+        policy = new NewCoverage();
+    }
+
+    
+    function testRegisterAdmin() public {
+        policy.registerAdmin(owner);
+        policy.registerAdmin(anotherAdmin);
+        policy.registerAdmin(yetAnotherAdmin);
+        policy.setDAOFee(0.5 ether);
+        policy.showAdmins();
+
+        vm.prank(owner);
+
+        policy.createInsurancePolicy("Collision Cover", agreement, policyOffer, 2 days, 7 days);
+        policy.registerPolicy(1, 10, 3, age, false, false, "Agbabiaka");
+        policy.generateHealthPolicy(1, 1day, 3day, 7 ETH);
+    }
+
+
+//    function makeAddr(string memory name) internal returns(address addr);
 
 
 
     /*
-    
-    // SPDX-License-Identifier: UNLICENSED
-    pragma solidity ^0.8.13;
-    import "forge-std/Test.sol";
-    import "../src/ticket.sol";
-    import "../src/ticketFactory.sol";
-    import "../src/ITicketing.sol";
-    import "../src/poap.sol";
-
-    contract CounterScript is Test {
-
-        TicketFactory ticketFactory;
-        address Controller = 0xc6d123c51c7122d0b23e8B6ff7eC10839677684d;
-        address eventAdmin = 0x49207A3567EF6bdD0bbEc88e94206f1cf53c5AfC;
         function setUp() public {
             ticketFactory = new TicketFactory(Controller);
         }
