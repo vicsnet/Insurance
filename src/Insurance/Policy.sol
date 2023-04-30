@@ -5,15 +5,13 @@ import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract NewCoverage is AccessControl, Ownable {
-    
     uint256 insureId;
-    uint256 DAOFEE;
+     uint256 DAOFEE;
     uint256 numOfProposals;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MAJOR_ADMIN = keccak256("MAJOR_ADMIN");
-    uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
-
+      uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
     struct InsurancePolicy {
         string PolicyName; //insurance Name
         bool PolicyActive; //is this Policy still Active
@@ -33,10 +31,9 @@ contract NewCoverage is AccessControl, Ownable {
         uint256 CoverageAmount; //amount to insure
         address Insurer; //
         string FamilyName;
+        ClaimStatus Claim;
         bool paid; //Insurance premium is paid
 
-        AutoDetail autoDetails;
-        ClaimStatus Claim;
         HealthDetail detailsOfhealth;
         ClaimDetail detailsToclaim;
     }
@@ -47,7 +44,7 @@ contract NewCoverage is AccessControl, Ownable {
     }
     struct HealthDetail {
         bool Smoke;
-        bool FamilyHealthStatus; //what exactly are we checking here?
+        bool FamilyHealthStatus;
         string[] Gender;
         string[] prescription;
         uint[] age;
@@ -55,15 +52,6 @@ contract NewCoverage is AccessControl, Ownable {
         string PolicyCoverd;
         uint FamilyNo;
     }
-
-    struct AutoDetail {
-        string gender;
-        uint age;
-        uint drivingYears;
-        bool eyeDefect;
-        string policyCovered;
-    }
-
     struct ClaimDetail {
         bool Report;
         uint AmountToClaim;
@@ -95,12 +83,9 @@ contract NewCoverage is AccessControl, Ownable {
     mapping(address => mapping(uint256 => bool)) private hasValidateClaim;
 
     // dao
-    mapping(uint256 => DAOProposal) private daoProposals; //mapping to hold the dao proposals
-    DAOProposal[] private arrayDaoProposals;
-
-    //The uint256[] is not instantiated anywhere, and if this is to track total votes, we can just have 
-    // a struct member in DAOProposal called totalVotes, instead of using an array
-    mapping(address => uint256[]) private stakeholderVotes; //to validate vote
+        mapping(uint256 => DAOProposal) private daoProposals; //mapping to hold the dao proposals
+        DAOProposal[] private arrayDaoProposals;
+            mapping(address => uint256[]) private stakeholderVotes; //to validate vote
 
 
     InsurancePolicy[] public arrayPolicy;
@@ -137,19 +122,19 @@ contract NewCoverage is AccessControl, Ownable {
         return admins;
     }
 
-    function verifyAdmin(address _admin) external view returns (bool) {
+    function verifyAdmin(address _admin) internal view returns (bool) {
         return hasRole(ADMIN_ROLE, _admin);
     }
 
     function createInsurancePolicy(
         string memory _policyName,
-        string memory _policyOffer,
         string[] memory _agreement,
+        string[] memory _policyOffer,
         uint _minimumPeriod,
         uint _maximumPeriod
     ) external onlyRole(ADMIN_ROLE) {
-        if (_minimumPeriod < 1 weeks) revert();
-        if (_maximumPeriod > 52 weeks) revert();
+        // if (_minimumPeriod < MAXIMUM_POLICY_DURATION) revert();
+        // if (_maximumPeriod > MAXIMUM_POLICY_DURATION) revert();
         insureId += 1;
 
         InsurancePolicy storage createPolicy = insurePolicy[insureId];
@@ -160,16 +145,15 @@ contract NewCoverage is AccessControl, Ownable {
         createPolicy.MinimumPeriod = _minimumPeriod;
         createPolicy.MaximumPeriod = _maximumPeriod;
 
-        // InsurancePolicy memory newPolicy = InsurancePolicy({
-        //     PolicyName: _policyName,
-        //     PolicyActive: true,
-        //     Agreement: abi.encode(_agreement),
-        //     PolicyOffer: abi.encode(_policyOffer),
-        //     MinimumPeriod: _minimumPeriod,
-        //     MaximumPeriod: _maximumPeriod
-        // });  I DONT THINK WE NEED TO ASSIGN VALUES TO THE STRUCT TWICE
-
-        arrayPolicy.push(createPolicy);
+        InsurancePolicy memory newPolicy = InsurancePolicy({
+            PolicyName: _policyName,
+            PolicyActive: true,
+            Agreement: abi.encode(_agreement),
+            PolicyOffer: abi.encode(_policyOffer),
+            MinimumPeriod: _minimumPeriod,
+            MaximumPeriod: _maximumPeriod
+        });
+        arrayPolicy.push(newPolicy);
     }
 
     // register for the health policy
@@ -181,11 +165,7 @@ contract NewCoverage is AccessControl, Ownable {
         bool _familyHealthStatus,
         bool _smoke,
         string memory _familyName
-    ) external {
-        if(_percentageToCover <= 0) revert("Invalid value [percentageToCover]");
-        if(_familyNo <= 0) revert("Invalid value [familyNo]");
-        // if(_age <= 0) revert("Invalid value [age]");
-
+    ) public {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         newPolicy.InsureId = _insureId;
         newPolicy.PercentageToCover = _percentageToCover;
@@ -195,8 +175,8 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.detailsOfhealth.Smoke = _smoke;
         newPolicy.FamilyName = _familyName;
         newPolicy.Insurer = msg.sender;
-        ArrayPolicyPurchase[msg.sender].push(newPolicy);
-        AdminArrayPolicyPurchase.push(newPolicy);
+          ArrayPolicyPurchase[msg.sender].push(newPolicy);
+          AdminArrayPolicyPurchase.push(newPolicy);
     }
 
     // generate health policy price
@@ -205,9 +185,8 @@ contract NewCoverage is AccessControl, Ownable {
         uint _startTime,
         uint _endTime,
         uint _amountToInsure // uint _periodOfCoverage
-    ) external returns(uint256){
-        // uint id = _insureId;
-        if(_startTime < block.timestamp) revert("Invalid time [_startTime]");
+    ) public {
+       if(_startTime < block.timestamp) revert("Invalid time [_startTime]");
         if(_endTime < _startTime) revert("Invalid time [_endTime]");
         if(_amountToInsure <= 0) revert("Invalid value [_amountToInsure]");
         
@@ -224,7 +203,7 @@ contract NewCoverage is AccessControl, Ownable {
         //determine deductible to be paid
         uint coverToPay = (newPolicy.PercentageToCover * 1) / 100;
         uint _amountInsureCover = _amountToInsure;
-        uint256 determineAmount = _amountInsureCover * coverToPay;
+        uint256 determineAmount = coverToPay;
         newPolicy.deductible = determineAmount;
         uint256 ageSum;
         uint smokingFactor;
@@ -248,9 +227,8 @@ contract NewCoverage is AccessControl, Ownable {
 
         uint256 riskFactor = ((ageSum * uint256(40 * 1)) / 100) + 1 + 2 + smokingFactor + familyHealthFactor;
 
-        // uint timeFactor = (timeToEnd_ / 365 days) * 1;
 
-        uint _premium = (_amountInsureCover * riskFactor) + determineAmount + (((timeToEnd_ / 365 days) * 1) * _amountInsureCover);
+        uint _premium = ((_amountInsureCover * riskFactor/100)) + determineAmount + ((((timeToEnd_ / 365 days) * 1) * _amountInsureCover)/100);
 
         
         newPolicy.AmountPaid = _premium;
@@ -258,11 +236,9 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.EndTime = timeToEnd_;
         newPolicy.CoverageAmount = _amountInsureCover;
         
-        // return (uint(40 * 1) / 100);
-        // return smokingFactor;
+       
         return _premium;
-        // return ageSum;
-        // return riskFactor;
+  
     }
 
     function payInsurance(uint _amount, uint _insureId) public {
@@ -305,6 +281,7 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.detailsToclaim.AmountToClaim = _amount;
         newPolicy.Claim = ClaimStatus.Pending;
     }
+
 
     //claim Automobile insurance
 
@@ -372,6 +349,7 @@ contract NewCoverage is AccessControl, Ownable {
     //     userClaimDetails[msg.sender].AmountApplied = _amount;
     //     userClaimDetails[msg.sender].Event = _event;
     // }
+
 
 //function to get all the policy bought by a user
 function getPolicyPurchases() public view returns (PolicyPurchase[] memory) {
