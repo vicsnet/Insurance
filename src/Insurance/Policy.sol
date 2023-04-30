@@ -93,6 +93,7 @@ contract NewCoverage is AccessControl, Ownable {
     address[] public admins;
 
     event PaidInsurance(address insured , uint _amount);
+    event GeneratedHealthPolicy(address insured, uint startTime, uint premium);
 
     function registerAdmin(address _newAdmin) external onlyOwner {
         if (_newAdmin == address(0x0)) revert("ADDRESS_ZERO_REVERTED");
@@ -243,6 +244,7 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.CoverageAmount = _amountInsureCover;
 
         return _premium;
+        emit GeneratedHealthPolicy(msg.sender, _startTime, _premium);
     }
 
     function payInsurance(uint _amount, uint _insureId) external {
