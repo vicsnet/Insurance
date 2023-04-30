@@ -11,6 +11,7 @@ contract InsuranceTest is Test {
     address user = 0x64b6eBE0A55244f09dFb1e46Fe59b74Ab94F8BE1;
     address user2 = 0x99C9fc46f92E8a1c0deC1b1747d010903E884bE1;
     string[] agreement = ["30% deductible", "Abc"];
+    string[] policyOffer = ["Single", 'Family'];
 
     function setUp() public {
         newCoverage = new NewCoverage();
@@ -34,8 +35,7 @@ contract InsuranceTest is Test {
         test_registerAdmin();
         test_Misc();
 
-        // agreement.push("30% deductible");
-        string memory policyOffer = "Single";
+
         vm.prank(Admin);
         newCoverage.createInsurancePolicy(
             "Evergreen Insure",
@@ -52,7 +52,7 @@ contract InsuranceTest is Test {
             1,
             age,
             true,
-            false,
+            true,
             "Adeyemi Samuel"
         );
     }
@@ -66,8 +66,8 @@ contract InsuranceTest is Test {
         uint premium = newCoverage.generateHealthPolicy(
             40,
             1 weeks,
-            32 weeks,
-            20000
+            52 weeks,
+            150000
         );
         console.log(premium);
     }
