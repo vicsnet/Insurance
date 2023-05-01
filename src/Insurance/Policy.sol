@@ -220,7 +220,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         bool _smoke = newPolicy.detailsOfhealth.Smoke;
         bool _familyHealthStatus = newPolicy.detailsOfhealth.FamilyHealthStatus;
         //determine deductible to be paid
-        uint coverToPay = (newPolicy.PercentageToCover * 1) / 100;
+        uint coverToPay = (newPolicy.PercentageToCover * _amountToInsure) / 100;
         uint _amountInsureCover = _amountToInsure;
         uint256 determineAmount = coverToPay;
         newPolicy.deductible = determineAmount;
@@ -258,7 +258,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         newPolicy.EndTime = timeToEnd_;
         newPolicy.CoverageAmount = _amountInsureCover;
 
-        return newPolicy.deductible;
+        return _amountInsureCover;
         // emit GeneratedHealthPolicy(msg.sender, _startTime, _premium);
     }
 
@@ -316,70 +316,6 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         // emit ClaimedHealthPolicy(msg.sender, _amount);
     }
 
-    //claim Automobile insurance
-
-    // Register for auto insurance
-    // function regAutoInsurance(
-    //     uint _insureId,
-    //     uint _age,
-    //     uint _drivingYears,
-    //     bool _eyeDefect,
-    //     string calldata _name,
-    //     string calldata _gender,
-    //     string calldata _policyCovered
-    // ) external returns (uint deductible) {
-    //     PolicyPurchase storage policy = policyBought[msg.sender][_insureId];
-
-    //     bytes32 zerohash = keccak256("");
-    //     if (keccak256(abi.encode(_name)) == zerohash) revert("Name cannot be blank");
-    //     if (keccak256(abi.encode(_policyCovered)) == zerohash)
-    //         revert("Policy covered cannot be blank");
-    //     if(keccak256(abi.encode(_gender)) == zerohash) revert("Gender cannot be blank");
-    //     if(_drivingYears <= 0) revert("Invalid age");
-    //     if(_age < 18) revert("Age is 18 years minimum");
-
-    //     // payment
-
-    //     policy.FamilyName = _name;
-    //     policy.autoDetails.gender = _gender;
-    //     policy.autoDetails.age = _age;
-    //     policy.autoDetails.drivingYears = _drivingYears;
-    //     policy.autoDetails.eyeDefect = _eyeDefect;
-    //     policy.autoDetails.policyCovered = _policyCovered;
-
-    //     // emit some event
-    // }
-
-    function getAutoInsurance(
-        uint _insureId,
-        uint _startTime,
-        uint _endTime,
-        uint _amountToInsure
-    ) external {
-        if (_startTime < block.timestamp) revert("Invalid time [_startTime]");
-        if (_endTime < _startTime) revert("Invalid time [_endTime]");
-        if (_amountToInsure <= 0) revert("Invalid value [_amountToInsure]");
-
-        PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
-        if (msg.sender != newPolicy.Insurer) {
-            revert("Insurer record not found");
-        }
-
-        uint timeToStart_ = block.timestamp + _startTime;
-        uint timeToEnd_ = timeToStart_ + _endTime;
-    }
-
-    // claim Health Insurance
-    // if claim is once rejected you have to pay to resubmit claim
-    // function claimAutoInsurance(uint _insureId, uint256 _amount, string calldata _event ) external {
-    //     policyBought storage policy = policyBought[msg.sender][_insureId];
-
-    //     if(policy.deductible <= 0) revert("Deductible payment not on record");
-
-    //     uint256 totalSub = policy.CoverageAmount;
-    //     userClaimDetails[msg.sender].AmountApplied = _amount;
-    //     userClaimDetails[msg.sender].Event = _event;
-    // }
 
     //function to get all the policy bought by a user
     function getPolicyPurchases()
@@ -460,7 +396,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
     }
 
     //function to collect claim
-    function ClaimReward(uint _insureId, address _tokenDao) public {
+    function ClaimReward(uint _insureId, address _tokenDao) external {
         PolicyPurchase storage _newPolicy = policyBought[msg.sender][_insureId];
 
         bool voteOutcome = ValidateClaimStatus(_insureId);
@@ -474,8 +410,10 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         uint AmountLeft = _newPolicy.CoverageAmount - _newPolicy.detailsToclaim.AmountToClaim;
         _newPolicy.CoverageAmount = AmountLeft;
 
+        uint reward = _newPolicy.detailsToclaim.AmountToClaim - _newPolicy.deductible;
+
         //logic to transfer the token worth
-        IERC20(_tokenDao).transfer(msg.sender, AmountLeft);
+        IERC20(_tokenDao).transfer(msg.sender, reward);
     }
 
     // create Proposal
@@ -555,3 +493,67 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
 
     // receive() external payable virtual;
 }
+    //claim Automobile insurance
+
+    // Register for auto insurance
+    // function regAutoInsurance(
+    //     uint _insureId,
+    //     uint _age,
+    //     uint _drivingYears,
+    //     bool _eyeDefect,
+    //     string calldata _name,
+    //     string calldata _gender,
+    //     string calldata _policyCovered
+    // ) external returns (uint deductible) {
+    //     PolicyPurchase storage policy = policyBought[msg.sender][_insureId];
+
+    //     bytes32 zerohash = keccak256("");
+    //     if (keccak256(abi.encode(_name)) == zerohash) revert("Name cannot be blank");
+    //     if (keccak256(abi.encode(_policyCovered)) == zerohash)
+    //         revert("Policy covered cannot be blank");
+    //     if(keccak256(abi.encode(_gender)) == zerohash) revert("Gender cannot be blank");
+    //     if(_drivingYears <= 0) revert("Invalid age");
+    //     if(_age < 18) revert("Age is 18 years minimum");
+
+    //     // payment
+
+    //     policy.FamilyName = _name;
+    //     policy.autoDetails.gender = _gender;
+    //     policy.autoDetails.age = _age;
+    //     policy.autoDetails.drivingYears = _drivingYears;
+    //     policy.autoDetails.eyeDefect = _eyeDefect;
+    //     policy.autoDetails.policyCovered = _policyCovered;
+
+    //     // emit some event
+    // }
+
+    // function getAutoInsurance(
+    //     uint _insureId,
+    //     uint _startTime,
+    //     uint _endTime,
+    //     uint _amountToInsure
+    // ) external {
+    //     if (_startTime < block.timestamp) revert("Invalid time [_startTime]");
+    //     if (_endTime < _startTime) revert("Invalid time [_endTime]");
+    //     if (_amountToInsure <= 0) revert("Invalid value [_amountToInsure]");
+
+    //     PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+    //     if (msg.sender != newPolicy.Insurer) {
+    //         revert("Insurer record not found");
+    //     }
+
+    //     uint timeToStart_ = block.timestamp + _startTime;
+    //     uint timeToEnd_ = timeToStart_ + _endTime;
+    // }
+
+    // claim Health Insurance
+    // if claim is once rejected you have to pay to resubmit claim
+    // function claimAutoInsurance(uint _insureId, uint256 _amount, string calldata _event ) external {
+    //     policyBought storage policy = policyBought[msg.sender][_insureId];
+
+    //     if(policy.deductible <= 0) revert("Deductible payment not on record");
+
+    //     uint256 totalSub = policy.CoverageAmount;
+    //     userClaimDetails[msg.sender].AmountApplied = _amount;
+    //     userClaimDetails[msg.sender].Event = _event;
+    // }
