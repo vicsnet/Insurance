@@ -3,14 +3,13 @@
 pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
-import '../CoverERC20.sol';
+import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
 
 contract NewCoverage is AccessControl, Ownable {
-
     uint256 insureId;
     uint256 DAOFEE;
     uint256 numOfProposals;
-    CoverERC20 coverERC20;
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MAJOR_ADMIN = keccak256("MAJOR_ADMIN");
@@ -67,7 +66,7 @@ contract NewCoverage is AccessControl, Ownable {
         uint256 livePeriod;
         uint256 votesFor;
         uint256 votesAgainst;
-        string description;
+        bytes description;
         bool votingPassed;
         bool paid;
         address proposer;
@@ -92,8 +91,10 @@ contract NewCoverage is AccessControl, Ownable {
     InsurancePolicy[] public arrayPolicy;
     address[] public admins;
 
-    event PaidInsurance(address insured , uint _amount);
-    event GeneratedHealthPolicy(address insured, uint startTime, uint premium);
+    event PaidInsurance(address insured, uint _amount);
+
+    // event GeneratedHealthPolicy(address insured, uint startTime, uint premium);
+    // event ClaimedHealthPolicy(address insured, uint amount);
 
     function registerAdmin(address _newAdmin) external onlyOwner {
         if (_newAdmin == address(0x0)) revert("ADDRESS_ZERO_REVERTED");
@@ -101,27 +102,41 @@ contract NewCoverage is AccessControl, Ownable {
         admins.push(_newAdmin);
     }
 
-    function setDAOFee(uint _amount) public onlyOwner {
+    function setDAOFee(uint _amount) external onlyOwner {
         DAOFEE = _amount;
     }
 
+    //buy protocol token
+    function buyToken(uint _amount, address _tokenDao) payable external {
+        if(msg.value < _amount ) revert("Enter correct amount");
+
+        (bool success, ) = address(this).call{value: _amount}("");
+        require(success, 'Ether payment failed...!');
+
+        uint EthPrice = getEthPrice();
+        uint rate = EthPrice * 1000;
+        uint amountReceived = rate * _amount;
+
+        IERC20(_tokenDao).transfer(msg.sender, _amount);
+    }
+
     // joinDAO
-    // function becomeAdmin(uint _daoFee, address _tokenContract) public payable {
-    //     address account = msg.sender;
-    //     if(DAOFEE == 0){
-    //         revert();
-    //     }
-    //     if (_daoFee < DAOFEE){
-    //         revert();
-    //     }
-    //     if(IERC20(_tokenContract).balanceOf(account) < _daoFee){
-    //         revert();
-    //     }
-    //     IERC20(_tokenContract).transferFrom(account, address(this), _daoFee);
-    //     require(msg.value > 0, "Insuficient Amount");
-    //     _setupRole(STAKEHOLDER_ROLE, account);
-    //     admins.push(msg.sender);
-    // }
+    function joinDAO(uint _daoFee, address _tokenContract) external {
+        if(DAOFEE == 0){
+            revert("OPs error, contact admin");
+        }
+        if (_daoFee < DAOFEE){
+            revert('Amount less than DAO fee');
+        }
+        if(IERC20(_tokenContract).balanceOf(msg.sender) < _daoFee){
+            revert("Insufficient balance");
+        }
+        IERC20(_tokenContract).transferFrom(msg.sender, address(this), _daoFee);
+
+        _setupRole(ADMIN_ROLE, msg.sender);
+        admins.push(msg.sender);
+    }
+
     function showAdmins() external view returns (address[] memory) {
         return admins;
     }
@@ -244,16 +259,16 @@ contract NewCoverage is AccessControl, Ownable {
         newPolicy.CoverageAmount = _amountInsureCover;
 
         return _premium;
-        emit GeneratedHealthPolicy(msg.sender, _startTime, _premium);
+        // emit GeneratedHealthPolicy(msg.sender, _startTime, _premium);
     }
 
-    function payInsurance(uint _amount, uint _insureId) external {
+    function payInsurance(uint _amount, uint _insureId, address _tokenDAO) external {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         if (msg.sender != newPolicy.Insurer) {
             revert("Insurer record not found");
         }
         if (newPolicy.CoverageAmount > _amount) {
-            revert('Amount less than user coverage');
+            revert("Amount less than user coverage");
         }
         if (newPolicy.PercentageToCover == 0) {
             revert("User registration not found");
@@ -262,7 +277,7 @@ contract NewCoverage is AccessControl, Ownable {
             revert("User already has payment record");
         }
 
-        coverERC20.transferFrom(msg.sender, address(this), _amount);  
+        IERC20(_tokenDAO).transferFrom(msg.sender, address(this), _amount);
         newPolicy.paid = true;
         newPolicy.AmountPaid = _amount;
 
@@ -276,21 +291,25 @@ contract NewCoverage is AccessControl, Ownable {
         uint _insureId
     ) public {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
-        if (block.timestamp > newPolicy.EndTime) revert();
-        if (newPolicy.paid == false) {
-            revert();
-        }
-        if (_amount > newPolicy.CoverageAmount) revert();
+        if (block.timestamp > newPolicy.EndTime)
+            revert("Insurance coverage expired");
+        // if (newPolicy.paid == false) {
+        //     revert("No record of insurance subscription found");
+        // }
+        if (_amount > newPolicy.CoverageAmount)
+            revert("Amount exceeds coverage");
         if (msg.sender != newPolicy.Insurer) {
-            revert();
+            revert("Record not found");
         }
         if (_report == false) {
-            revert();
+            revert("No evidence submitted");
         }
 
         newPolicy.detailsToclaim.Report = _report;
         newPolicy.detailsToclaim.AmountToClaim = _amount;
         newPolicy.Claim = ClaimStatus.Pending;
+
+        // emit ClaimedHealthPolicy(msg.sender, _amount);
     }
 
     //claim Automobile insurance
@@ -360,7 +379,7 @@ contract NewCoverage is AccessControl, Ownable {
 
     //function to get all the policy bought by a user
     function getPolicyPurchases()
-        public
+        external
         view
         returns (PolicyPurchase[] memory)
     {
@@ -377,39 +396,61 @@ contract NewCoverage is AccessControl, Ownable {
         uint _insureId,
         address _rewardee,
         bool _validate
-    ) public {
-        if (!hasRole(ADMIN_ROLE, msg.sender)) {
-            revert();
-        }
-        if (hasValidateClaim[msg.sender][_insureId] == true) revert();
+    ) external {
         PolicyPurchase storage newPolicy = policyBought[_rewardee][_insureId];
-        if (_validate = true) {
+
+        if (newPolicy.Insurer != _rewardee) revert("Rewardee not a subscriber");
+
+        if (!hasRole(ADMIN_ROLE, msg.sender)) {
+            revert("Unauthorized operation [validateClaim]");
+        }
+        if (hasValidateClaim[msg.sender][_insureId] == true)
+            revert("Can't validate twice");
+
+        if (_validate == true) {
             newPolicy.detailsToclaim.ValidateFor += 1;
         }
-        if (_validate = false) {
+        if (_validate == false) {
             newPolicy.detailsToclaim.Validateagainst += 1;
         }
+
         hasValidateClaim[msg.sender][_insureId] = true;
     }
 
     //Validate claim
-    function ValidateClaimStatus(uint _insureId, address _rewardee) public {
-        uint _adminPercent = (admins.length * 70) / 100;
-        PolicyPurchase storage newPolicy = policyBought[_rewardee][_insureId];
-        if (newPolicy.detailsToclaim.ValidateFor < _adminPercent) {
-            revert("YOU_CANT_ACCESS_NOW");
+    function ValidateClaimStatus(uint _insureId) external returns (bool) {
+        PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
+
+        uint adminPercent = (admins.length * 70) / 100;
+        // uint totalVotes_ = newPolicy.detailsToclaim.ValidateFor + newPolicy.detailsToclaim.Validateagainst;
+        // uint votesPercent = (totalVotes_ * 60) / 100;
+
+        if (msg.sender != newPolicy.Insurer) {
+            revert("User record not found");
         }
 
-        if (msg.sender != _rewardee) {
-            revert();
+        // if(newPolicy.detailsToclaim.ValidateFor >= votesPercent ) {
+        //     newPolicy.Claim = ClaimStatus.Approved;
+        //     return true;
+        // } else if(newPolicy.detailsToclaim.Validateagainst >= votesPercent) {
+        //     newPolicy.Claim = ClaimStatus.Rejected;
+        //     return false;
+        // } else {
+        //     newPolicy.Claim = ClaimStatus.Pending;
+        // }
+        if (newPolicy.detailsToclaim.ValidateFor < adminPercent) {
+            revert("Claim not approved");
         }
+
         if (
             newPolicy.detailsToclaim.ValidateFor >
             newPolicy.detailsToclaim.Validateagainst
         ) {
             newPolicy.Claim = ClaimStatus.Approved;
+            return true;
         } else {
             newPolicy.Claim = ClaimStatus.Rejected;
+            return false;
         }
     }
 
@@ -430,7 +471,7 @@ contract NewCoverage is AccessControl, Ownable {
         }
 
         uint AmountLeft = _newPolicy.CoverageAmount -
-            _newPolicy.detailsToclaim.AmountToClaim;
+        _newPolicy.detailsToclaim.AmountToClaim;
         _newPolicy.CoverageAmount = AmountLeft;
 
         //logic to transfer the token worth
@@ -441,31 +482,36 @@ contract NewCoverage is AccessControl, Ownable {
     function createProposal(
         string calldata description,
         uint256 amount
-    ) external {
-        if (!hasRole(ADMIN_ROLE, msg.sender)) {
-            revert();
-        }
-
+    ) external onlyRole(ADMIN_ROLE) {
+       
+        
+        bytes memory descHash = abi.encode(description);
+        uint256 vetPeriod = block.timestamp + MINIMUM_VOTING_PERIOD;
         uint256 proposalId = numOfProposals + 1;
         DAOProposal storage proposal = daoProposals[proposalId];
         proposal.id = proposalId;
         proposal.proposer = payable(msg.sender);
-        proposal.description = description;
+        proposal.description = descHash;
         proposal.amount = amount;
-        proposal.livePeriod = block.timestamp + MINIMUM_VOTING_PERIOD;
+        proposal.livePeriod = vetPeriod;
         arrayDaoProposals.push(proposal);
+
+    }
+
+    function returnProposals() external view returns(DAOProposal[] memory){
+        return arrayDaoProposals;
     }
 
     // to vote for a proposal
-    function vote(uint256 proposalId, bool supportProposal) external {
+    function vote(uint256 proposalId, bool supportProposal) external onlyRole(ADMIN_ROLE) {
         DAOProposal storage daoProposal = daoProposals[proposalId];
 
         votable(daoProposal);
 
         if (supportProposal) {
-            daoProposal.votesFor++;
+            daoProposal.votesFor = daoProposal.votesFor + 1;
         } else {
-            daoProposal.votesAgainst++;
+            daoProposal.votesAgainst = daoProposal.votesAgainst + 1;
         }
 
         stakeholderVotes[msg.sender].push(daoProposal.id);
@@ -474,16 +520,22 @@ contract NewCoverage is AccessControl, Ownable {
     function votable(DAOProposal storage daoProposal) internal {
         if (
             daoProposal.votingPassed ||
-            daoProposal.livePeriod <= block.timestamp
+            daoProposal.livePeriod < block.timestamp 
         ) {
             daoProposal.votingPassed = true;
             revert("Voting period has passed on this proposal");
         }
+
 
         uint256[] memory tempVotes = stakeholderVotes[msg.sender];
         for (uint256 votes = 0; votes < tempVotes.length; votes++) {
             if (daoProposal.id == tempVotes[votes])
                 revert("This stakeholder already voted on this proposal");
         }
+    }
+
+    function showVoteRecords(uint proposalId) external returns(uint, uint) {
+        DAOProposal memory _daoProposal = daoProposals[proposalId];
+        return (_daoProposal.votesFor, _daoProposal.votesAgainst);
     }
 }
