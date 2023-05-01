@@ -258,7 +258,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         newPolicy.EndTime = timeToEnd_;
         newPolicy.CoverageAmount = _amountInsureCover;
 
-        return _premium;
+        return newPolicy.deductible;
         // emit GeneratedHealthPolicy(msg.sender, _startTime, _premium);
     }
 
@@ -271,7 +271,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         if (msg.sender != newPolicy.Insurer) {
             revert("Insurer record not found");
         }
-        if (newPolicy.CoverageAmount > _amount) {
+        if ( _amount < newPolicy.CoverageAmount) {
             revert("Amount less than user coverage");
         }
         if (newPolicy.PercentageToCover == 0) {

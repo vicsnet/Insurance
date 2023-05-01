@@ -102,11 +102,12 @@ contract InsuranceTest is Test {
         // vm.prank(user);
         // newCoverage.buyToken{value:10 ether}(100_000, NEON);
 
-        DAOToken.mint(user, 150_000);
+        DAOToken.mint(user, 500_000);
 
         vm.startPrank(user);
         DAOToken.approve(address(newCoverage), 100_000);
         newCoverage.joinDAO(100_000, address(DAOToken));
+        newCoverage.showAdmins();
 
         vm.stopPrank();
 
@@ -137,7 +138,12 @@ contract InsuranceTest is Test {
             52 weeks,
             150000
         );
-        // console.log(premium);
+        console.log(premium);
+        
+        vm.startPrank(user);
+        DAOToken.approve(address(newCoverage), 150_000);
+        newCoverage.payInsurance(150000, 40, address(DAOToken));
+        vm.stopPrank();
 
         vm.prank(user);
         newCoverage.claimHealthPolicy(true, 15000, 40);
@@ -153,9 +159,12 @@ contract InsuranceTest is Test {
         vm.prank(Admin3);
         newCoverage.validateClaim(40, user, false);
         vm.prank(Admin4);
-        newCoverage.validateClaim(40, user, false);
+        newCoverage.validateClaim(40, user, true);
         vm.prank(Owner);
         newCoverage.validateClaim(40, user, true);
+
+        vm.prank(user);
+        newCoverage.ClaimReward(40, address(DAOToken));
 
         // newCoverage.validateClaim(40, msg.sender, false);
         // newCoverage.validateClaim(40, msg.sender, false);
