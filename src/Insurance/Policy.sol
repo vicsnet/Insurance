@@ -4,9 +4,9 @@ pragma solidity ^0.8.13;
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "./Pricefeed.sol";
 
-
-contract NewCoverage is AccessControl, Ownable {
+contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
     uint256 insureId;
     uint256 DAOFEE;
     uint256 numOfProposals;
@@ -107,28 +107,28 @@ contract NewCoverage is AccessControl, Ownable {
     }
 
     //buy protocol token
-    function buyToken(uint _amount, address _tokenDao) payable external {
-        if(msg.value < _amount ) revert("Enter correct amount");
+    function buyToken(uint _amount, address _tokenDao) external payable {
+        if (msg.value < _amount) revert("Enter correct amount");
 
         (bool success, ) = address(this).call{value: _amount}("");
-        require(success, 'Ether payment failed...!');
+        require(success, "Ether payment failed...!");
 
-        uint EthPrice = getEthPrice();
-        uint rate = EthPrice * 1000;
+        int EthPrice = getLatestPrice();
+        uint rate = uint(EthPrice) * 1000;
         uint amountReceived = rate * _amount;
 
-        IERC20(_tokenDao).transfer(msg.sender, _amount);
+        IERC20(_tokenDao).transfer(msg.sender, amountReceived);
     }
 
     // joinDAO
     function joinDAO(uint _daoFee, address _tokenContract) external {
-        if(DAOFEE == 0){
+        if (DAOFEE == 0) {
             revert("OPs error, contact admin");
         }
-        if (_daoFee < DAOFEE){
-            revert('Amount less than DAO fee');
+        if (_daoFee < DAOFEE) {
+            revert("Amount less than DAO fee");
         }
-        if(IERC20(_tokenContract).balanceOf(msg.sender) < _daoFee){
+        if (IERC20(_tokenContract).balanceOf(msg.sender) < _daoFee) {
             revert("Insufficient balance");
         }
         IERC20(_tokenContract).transferFrom(msg.sender, address(this), _daoFee);
@@ -262,7 +262,11 @@ contract NewCoverage is AccessControl, Ownable {
         // emit GeneratedHealthPolicy(msg.sender, _startTime, _premium);
     }
 
-    function payInsurance(uint _amount, uint _insureId, address _tokenDAO) external {
+    function payInsurance(
+        uint _amount,
+        uint _insureId,
+        address _tokenDAO
+    ) external {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         if (msg.sender != newPolicy.Insurer) {
             revert("Insurer record not found");
@@ -418,7 +422,7 @@ contract NewCoverage is AccessControl, Ownable {
     }
 
     //Validate claim
-    function ValidateClaimStatus(uint _insureId) external returns (bool) {
+    function ValidateClaimStatus(uint _insureId) internal returns (bool) {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
 
         uint adminPercent = (admins.length * 70) / 100;
@@ -439,7 +443,8 @@ contract NewCoverage is AccessControl, Ownable {
         //     newPolicy.Claim = ClaimStatus.Pending;
         // }
         if (newPolicy.detailsToclaim.ValidateFor < adminPercent) {
-            revert("Claim not approved");
+            // revert("Claim not approved");
+            return false;
         }
 
         if (
@@ -455,26 +460,22 @@ contract NewCoverage is AccessControl, Ownable {
     }
 
     //function to collect claim
-    function ClaimReward(uint _insureId, address _rewardee) public {
-        uint _adminPercent = (admins.length * 70) / 100;
+    function ClaimReward(uint _insureId, address _tokenDao) public {
+        PolicyPurchase storage _newPolicy = policyBought[msg.sender][_insureId];
 
-        if (msg.sender != _rewardee) {
-            revert();
+        bool voteOutcome = ValidateClaimStatus(_insureId);
+
+        if (msg.sender != _newPolicy.Insurer) {
+            revert("User record not found");
         }
 
-        PolicyPurchase storage _newPolicy = policyBought[_rewardee][_insureId];
-        if (_newPolicy.detailsToclaim.ValidateFor < _adminPercent) {
-            revert("YOU_CANT_WITHDRAW_CLAIM_NOT_ACCEPTED");
-        }
-        if (_newPolicy.Claim != ClaimStatus.Approved) {
-            revert("CLAIM_REJECTED");
-        }
+        if(voteOutcome == false) revert("claim not approved");
 
-        uint AmountLeft = _newPolicy.CoverageAmount -
-        _newPolicy.detailsToclaim.AmountToClaim;
+        uint AmountLeft = _newPolicy.CoverageAmount - _newPolicy.detailsToclaim.AmountToClaim;
         _newPolicy.CoverageAmount = AmountLeft;
 
         //logic to transfer the token worth
+        IERC20(_tokenDao).transfer(msg.sender, AmountLeft);
     }
 
     // create Proposal
@@ -483,8 +484,6 @@ contract NewCoverage is AccessControl, Ownable {
         string calldata description,
         uint256 amount
     ) external onlyRole(ADMIN_ROLE) {
-       
-        
         bytes memory descHash = abi.encode(description);
         uint256 vetPeriod = block.timestamp + MINIMUM_VOTING_PERIOD;
         uint256 proposalId = numOfProposals + 1;
@@ -495,15 +494,17 @@ contract NewCoverage is AccessControl, Ownable {
         proposal.amount = amount;
         proposal.livePeriod = vetPeriod;
         arrayDaoProposals.push(proposal);
-
     }
 
-    function returnProposals() external view returns(DAOProposal[] memory){
+    function returnProposals() external view returns (DAOProposal[] memory) {
         return arrayDaoProposals;
     }
 
     // to vote for a proposal
-    function vote(uint256 proposalId, bool supportProposal) external onlyRole(ADMIN_ROLE) {
+    function vote(
+        uint256 proposalId,
+        bool supportProposal
+    ) external onlyRole(ADMIN_ROLE) {
         DAOProposal storage daoProposal = daoProposals[proposalId];
 
         votable(daoProposal);
@@ -519,13 +520,11 @@ contract NewCoverage is AccessControl, Ownable {
 
     function votable(DAOProposal storage daoProposal) internal {
         if (
-            daoProposal.votingPassed ||
-            daoProposal.livePeriod < block.timestamp 
+            daoProposal.votingPassed || daoProposal.livePeriod < block.timestamp
         ) {
             daoProposal.votingPassed = true;
             revert("Voting period has passed on this proposal");
         }
-
 
         uint256[] memory tempVotes = stakeholderVotes[msg.sender];
         for (uint256 votes = 0; votes < tempVotes.length; votes++) {
@@ -534,8 +533,25 @@ contract NewCoverage is AccessControl, Ownable {
         }
     }
 
-    function showVoteRecords(uint proposalId) external returns(uint, uint) {
+    function showVoteRecords(uint proposalId) external view returns (uint, uint) {
         DAOProposal memory _daoProposal = daoProposals[proposalId];
         return (_daoProposal.votesFor, _daoProposal.votesAgainst);
     }
+
+    function withdrawEther(uint _amount, address _to) external onlyOwner {
+        if(_amount == 0) revert('Amount cannot be zero');
+        if(_to == address(0x0)) revert('Address zero detected');
+
+        (bool success, ) = _to.call{value: _amount}('');
+        require(success, 'Ether withdrawal failed');
+    }
+
+    function withdrawToken(uint _amount,address _daoToken, address _to) external onlyOwner {
+        if(_amount == 0) revert('Amount cannot be zero');
+        if(_to == address(0x0)) revert('Address zero detected');
+
+        IERC20(_daoToken).transfer(_to, _amount);
+    }
+
+    // receive() external payable virtual;
 }

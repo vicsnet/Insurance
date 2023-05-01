@@ -3,9 +3,13 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/Insurance/Policy.sol";
+import "../src/CoverERC20.sol";
+// import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+
 
 contract InsuranceTest is Test {
     NewCoverage public newCoverage;
+    CoverERC20 public DAOToken;
     address Owner = 0x661Be0562b31E9E8DdC2A7c93803005A1C71D749;
     address Admin = 0x23eBA962AC256e4BDfEb926c438AD33f96a68042;
     address user = 0x64b6eBE0A55244f09dFb1e46Fe59b74Ab94F8BE1;
@@ -17,6 +21,8 @@ contract InsuranceTest is Test {
 
     function setUp() public {
         newCoverage = new NewCoverage();
+        DAOToken = new CoverERC20('Neon', 'Neon');
+        DAOToken.mint(address(newCoverage), 10_000_000);
     }
 
     // function test_registerAdmin() public {
@@ -90,7 +96,19 @@ contract InsuranceTest is Test {
         newCoverage.registerAdmin(Admin3);
         newCoverage.registerAdmin(Admin4);
         newCoverage.registerAdmin(Owner);
-        newCoverage.setDAOFee(0.5 ether);
+        newCoverage.setDAOFee(100_000);
+
+        // vm.deal(user, 20 ether);
+        // vm.prank(user);
+        // newCoverage.buyToken{value:10 ether}(100_000, NEON);
+
+        DAOToken.mint(user, 150_000);
+
+        vm.startPrank(user);
+        DAOToken.approve(address(newCoverage), 100_000);
+        newCoverage.joinDAO(100_000, address(DAOToken));
+
+        vm.stopPrank();
 
         vm.prank(Admin);
         newCoverage.createInsurancePolicy(
@@ -144,8 +162,8 @@ contract InsuranceTest is Test {
         // newCoverage.validateClaim(40, msg.sender, true);
         // newCoverage.validateClaim(40, msg.sender, false);
         // newCoverage.validateClaim(40, msg.sender, false);
-        vm.prank(user);
-        bool votesPerc = newCoverage.ValidateClaimStatus(40);
+        // vm.prank(user);
+        // bool votesPerc = newCoverage.ValidateClaimStatus(40);
 
         vm.prank(Admin);
         newCoverage.createProposal(
