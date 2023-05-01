@@ -220,10 +220,10 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         bool _smoke = newPolicy.detailsOfhealth.Smoke;
         bool _familyHealthStatus = newPolicy.detailsOfhealth.FamilyHealthStatus;
         //determine deductible to be paid
-        uint coverToPay = (newPolicy.PercentageToCover * _amountToInsure) / 100;
+        // uint coverToPay = (newPolicy.PercentageToCover * _amountToInsure) / 100;
+        // uint256 determineAmount = coverToPay;
+        // newPolicy.deductible = determineAmount;
         uint _amountInsureCover = _amountToInsure;
-        uint256 determineAmount = coverToPay;
-        newPolicy.deductible = determineAmount;
         uint256 ageSum;
         uint smokingFactor;
         uint familyHealthFactor;
@@ -250,7 +250,6 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
             familyHealthFactor;
 
         uint _premium = (((_amountInsureCover * riskFactor) / 100)) +
-            determineAmount +
             ((((timeToEnd_ / 365 days) * 1) * _amountInsureCover) / 100);
 
         newPolicy.AmountPaid = _premium;
@@ -297,9 +296,9 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
         if (block.timestamp > newPolicy.EndTime)
             revert("Insurance coverage expired");
-        // if (newPolicy.paid == false) {
-        //     revert("No record of insurance subscription found");
-        // }
+        if (newPolicy.paid == false) {
+            revert("No record of insurance subscription found");
+        }
         if (_amount > newPolicy.CoverageAmount)
             revert("Amount exceeds coverage");
         if (msg.sender != newPolicy.Insurer) {
@@ -396,7 +395,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
     }
 
     //function to collect claim
-    function ClaimReward(uint _insureId, address _tokenDao) external {
+    function ClaimReward(uint _insureId, address _tokenDao) external returns(uint) {
         PolicyPurchase storage _newPolicy = policyBought[msg.sender][_insureId];
 
         bool voteOutcome = ValidateClaimStatus(_insureId);
@@ -410,10 +409,24 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         uint AmountLeft = _newPolicy.CoverageAmount - _newPolicy.detailsToclaim.AmountToClaim;
         _newPolicy.CoverageAmount = AmountLeft;
 
-        uint reward = _newPolicy.detailsToclaim.AmountToClaim - _newPolicy.deductible;
+        uint deductible = (_newPolicy.detailsToclaim.AmountToClaim * _newPolicy.PercentageToCover) / 100;
+
+        // if(_newPolicy.detailsToclaim.AmountToClaim > _newPolicy.deductible) {
+        //     uint reward = _newPolicy.detailsToclaim.AmountToClaim - deductible;
+        //     IERC20(_tokenDao).transfer(msg.sender, reward);
+        // } else {
+        //     uint reward = _newPolicy.deductible - _newPolicy.detailsToclaim.AmountToClaim;
+        //     IERC20(_tokenDao).transfer(msg.sender, reward);
+        // }
+
+        uint reward = _newPolicy.detailsToclaim.AmountToClaim - deductible;
+        IERC20(_tokenDao).transfer(msg.sender, reward);
+
+        _newPolicy.deductible = deductible;
+
+        return reward;
 
         //logic to transfer the token worth
-        IERC20(_tokenDao).transfer(msg.sender, reward);
     }
 
     // create Proposal

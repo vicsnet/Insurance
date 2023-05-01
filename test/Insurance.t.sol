@@ -136,17 +136,17 @@ contract InsuranceTest is Test {
             40,
             1 weeks,
             52 weeks,
-            150000
+            15000000
         );
-        console.log(premium);
+        // console.log(premium);
         
         vm.startPrank(user);
-        DAOToken.approve(address(newCoverage), 150_000);
-        newCoverage.payInsurance(150000, 40, address(DAOToken));
+        DAOToken.approve(address(newCoverage), 150_000_00);
+        newCoverage.payInsurance(15000000, 40, address(DAOToken));
         vm.stopPrank();
 
         vm.prank(user);
-        newCoverage.claimHealthPolicy(true, 15000, 40);
+        newCoverage.claimHealthPolicy(true, 5000000, 40);
 
         vm.prank(user);
         newCoverage.getPolicyPurchases();
@@ -164,7 +164,8 @@ contract InsuranceTest is Test {
         newCoverage.validateClaim(40, user, true);
 
         vm.prank(user);
-        newCoverage.ClaimReward(40, address(DAOToken));
+        uint dedux = newCoverage.ClaimReward(40, address(DAOToken));
+        console.log(dedux);
 
         // newCoverage.validateClaim(40, msg.sender, false);
         // newCoverage.validateClaim(40, msg.sender, false);
