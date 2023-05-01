@@ -317,7 +317,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
 
 
     //function to get all the policy bought by a user
-    function getPolicyPurchases()
+    function userGetPolicyPurchases()
         external
         view
         returns (PolicyPurchase[] memory)
@@ -504,7 +504,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         IERC20(_daoToken).transfer(_to, _amount);
     }
 
-    // receive() external payable virtual;
+    receive() external payable{}
 }
     //claim Automobile insurance
 
