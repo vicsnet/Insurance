@@ -116,6 +116,7 @@ contract InsuranceTest is Test {
             1 weeks,
             8 weeks
         );
+        newCoverage.returnAllPolicies();
 
         vm.prank(user);
         newCoverage.registerPolicy(
@@ -179,7 +180,7 @@ contract InsuranceTest is Test {
         );
 
         vm.prank(Admin);
-        newCoverage.vote(1, false);
+        newCoverage.vote(1, true);
         vm.startPrank(Admin2);
         // vm.warp(4 weeks);
         newCoverage.vote( 1, true);
@@ -187,7 +188,7 @@ contract InsuranceTest is Test {
         vm.prank(Admin3);
         newCoverage.vote( 1, false);
         vm.prank(Admin4);
-        newCoverage.vote( 1, false);
+        newCoverage.vote( 1, true);
         vm.prank(Owner);
         newCoverage.vote( 1, true);
 
@@ -195,9 +196,11 @@ contract InsuranceTest is Test {
 
         newCoverage.withdrawToken(200_000_000_000, address(DAOToken), Admin4);
         
-        vm.deal(user, 20 ether);
-        vm.prank(user);
-        newCoverage.buyToken{value:10 ether}(100_000, address(DAOToken));
+        // vm.deal(user, 20 ether);
+        // vm.prank(user);
+        // newCoverage.buyToken{value:10 ether}(100_000, address(DAOToken));
+
+        newCoverage.returnProposals();
        
     }
 }

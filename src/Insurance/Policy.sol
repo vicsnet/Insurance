@@ -330,6 +330,10 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         return AdminArrayPolicyPurchase;
     }
 
+    function returnAllPolicies() external  view returns(InsurancePolicy[] memory) {
+        return arrayPolicy;
+    }
+
     // to validate reward it determines if the insured amount is to be paid or not
     function validateClaim(
         uint _insureId,
@@ -439,6 +443,8 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         uint256 vetPeriod = block.timestamp + MINIMUM_VOTING_PERIOD;
         uint256 proposalId = numOfProposals + 1;
         DAOProposal storage proposal = daoProposals[proposalId];
+        proposal.votesFor = 0;
+        proposal.votesAgainst = 0;
         proposal.id = proposalId;
         proposal.proposer = payable(msg.sender);
         proposal.description = descHash;
@@ -461,13 +467,20 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         votable(daoProposal);
 
         if (supportProposal) {
-            daoProposal.votesFor = daoProposal.votesFor + 1;
+            daoProposal.votesFor += 1;
         } else {
-            daoProposal.votesAgainst = daoProposal.votesAgainst + 1;
+            daoProposal.votesAgainst += 1;
+        }
+
+        for(uint i = 0; i < arrayDaoProposals.length; i++) {
+            if(arrayDaoProposals[i].id == proposalId) {
+                arrayDaoProposals[i] = daoProposal;
+            }
         }
 
         stakeholderVotes[msg.sender].push(daoProposal.id);
     }
+
 
     function votable(DAOProposal storage daoProposal) internal {
         if (
