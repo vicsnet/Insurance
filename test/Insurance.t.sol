@@ -116,6 +116,15 @@ contract InsuranceTest is Test {
             1 weeks,
             8 weeks
         );
+        
+        vm.prank(Admin);
+        newCoverage.createInsurancePolicy(
+            "Evergreen Insure",
+            policyOffer,
+            agreement,
+            1 weeks,
+            8 weeks
+        );
         newCoverage.returnAllPolicies();
 
         vm.prank(user);

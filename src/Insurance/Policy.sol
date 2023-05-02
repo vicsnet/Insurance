@@ -15,6 +15,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
     bytes32 public constant MAJOR_ADMIN = keccak256("MAJOR_ADMIN");
     uint32 constant MINIMUM_VOTING_PERIOD = 1 weeks;
     struct InsurancePolicy {
+        uint256 InsureId;
         string PolicyName; //insurance Name
         bool PolicyActive; //is this Policy still Active
         bytes Agreement;
@@ -157,6 +158,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         insureId += 1;
 
         InsurancePolicy storage createPolicy = insurePolicy[insureId];
+        createPolicy.InsureId = insureId;
         createPolicy.PolicyName = _policyName;
         createPolicy.PolicyActive = true;
         createPolicy.Agreement = abi.encode(_agreement);
@@ -164,15 +166,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         createPolicy.MinimumPeriod = _minimumPeriod;
         createPolicy.MaximumPeriod = _maximumPeriod;
 
-        InsurancePolicy memory newPolicy = InsurancePolicy({
-            PolicyName: _policyName,
-            PolicyActive: true,
-            Agreement: abi.encode(_agreement),
-            PolicyOffer: abi.encode(_policyOffer),
-            MinimumPeriod: _minimumPeriod,
-            MaximumPeriod: _maximumPeriod
-        });
-        arrayPolicy.push(newPolicy);
+        arrayPolicy.push(createPolicy);
     }
 
     // register for the health policy
@@ -506,7 +500,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         if(_amount == 0) revert('Amount cannot be zero');
         if(_to == address(0x0)) revert('Address zero detected');
 
-        (bool success, ) = _to.call{value: _amount}('');
+        (bool success, ) = payable(_to).call{value: _amount}('');
         require(success, 'Ether withdrawal failed');
     }
 
