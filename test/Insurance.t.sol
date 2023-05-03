@@ -156,7 +156,7 @@ contract InsuranceTest is Test {
         newCoverage.claimHealthPolicy(true, 5000000, 40);
 
         vm.prank(user);
-        newCoverage.userGetPolicyPurchases();
+        newCoverage.userGetPolicyPurchases(user);
         newCoverage.getAllPurchase();
 
         vm.prank(Admin);

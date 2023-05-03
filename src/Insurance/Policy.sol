@@ -311,12 +311,13 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
 
 
     //function to get all the policy bought by a user
-    function userGetPolicyPurchases()
+    function userGetPolicyPurchases(address _insuredAcct)
         external
         view
         returns (PolicyPurchase[] memory)
     {
-        return ArrayPolicyPurchase[msg.sender];
+        PolicyPurchase[] storage purchases = ArrayPolicyPurchase[_insuredAcct];
+        return purchases;
     }
 
     // get all insurance  policy
