@@ -32,7 +32,7 @@ contract PolicyTest is Test {
 
         policy.createInsurancePolicy("Collision Cover", agreement, policyOffer, 2 days, 7 days);
         policy.registerPolicy(1, 10, 3, age, false, false, "Agbabiaka");
-        policy.generateHealthPolicy(1, 1day, 3day, 7 ETH);
+        policy.generateHealthPolicy(1, 1, 3, 7);
     }
 
 

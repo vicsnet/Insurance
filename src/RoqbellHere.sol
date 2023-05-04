@@ -1,122 +1,84 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.18;
+// SPDX-License-Identifier: Unlicense
+pragma solidity ^0.8.13;
 
-// // import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
-// import "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-// contract StablecoinInsurance {
-//     IERC20 public stablecoin;
-//     uint public depegThreshold;
-//     uint256 public constant MAXIMUM_POLICY_DURATION = 365 days;
+import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
+
+contract AutoInsurance is AccessControl, Ownable {
     
-//     struct Policy {
-//         address holder;
-//         uint amount;
-//         uint premium;
-//         // uint256 startTime;
-//         uint expiration;
-//         bool active;
-//     }
+    struct Policy {
+        address policyHolder;
+        uint premiumAmount;
+        uint coverageAmount;
+        uint durationInDays;
+        uint startTime;
+        uint endTime;
+        bool isActive;
+    }
     
-//     Policy[] public policies;
-//     mapping(address => uint[]) policyIds;
-//     mapping(uint => uint) public payouts;
-
-//     event PolicyCreated( address indexed holder, uint256 amount, uint256 premium, uint256 expiration );
-
-//     event ClaimSubmitted( address indexed holder, uint256 amount, uint256 timestamp );
-
-//     event ClaimValidated( address indexed holder, uint256 amount, uint256 timestamp );
-
-//     event ClaimPaidOut( address indexed holder, uint256 amount, uint256 timestamp );
-
-//     event PolicyCancelled( address indexed holder, uint256 refundAmount );
-
-//     event PolicyExpired(address indexed holder, uint256 amount, uint256 expiration);
+    mapping(address => Policy) policies;
     
-//     constructor(address _stablecoin, uint _depegThreshold) {
-//         stablecoin = IERC20(_stablecoin);
-//         depegThreshold = _depegThreshold;
-//     }
+    uint public maxCoverageAmount = 100 ether;
+    uint public maxDurationInDays = 365;
     
-//     function createPolicy(uint _amount, uint _duration, uint _premium) external {
-//         require(_amount > 0, "Insured amount must be greater than zero");
-//         require(_duration > 0, "Policy duration must be greater than zero");
-//         require(_duration <= MAXIMUM_POLICY_DURATION, "Duration exceeds maximum allowed");
-//         require(_premium > 0, "Premium must be greater than zero");
+    event PolicyCreated(address indexed policyHolder, uint premiumAmount, uint coverageAmount, uint durationInDays);
+    event PolicyCanceled(address indexed policyHolder);
+    event PolicyPayout(address indexed policyHolder, uint amount);
+    
+    function createPolicy(uint _coverageAmount, uint _durationInDays) public payable {
+        require(msg.value > 0, "Premium amount must be greater than 0");
+        require(_coverageAmount > 0 && _coverageAmount <= maxCoverageAmount, "Coverage amount must be between 0 and maxCoverageAmount");
+        require(_durationInDays > 0 && _durationInDays <= maxDurationInDays, "Duration must be between 0 and maxDurationInDays");
         
-//         // // Calculate premium based on amount and duration
-//         // uint256 premium = _amount * _duration * 1e15; // premium is 0.1% of insured amount per day
-//         // require(msg.value >= premium, "Insufficient premium");
-//         stablecoin.transferFrom(msg.sender, address(this), _premium);
-//         uint expiration = block.timestamp + _duration;
-//         uint id = policies.length;
-//         policies.push(Policy(msg.sender, _amount, _premium, expiration, true));
-//         policyIds[msg.sender].push(id);
-
-//         emit PolicyCreated( msg.sender, _amount, _premium, expiration );
-//     }
-    
-//     function lookupThreshold() external view returns (uint) {
-//         return depegThreshold;
-//     }
-    
-//     function submitClaim(uint _policyId) external {
-//         Policy storage policy = policies[_policyId];
-//         require(policy.holder == msg.sender, "You are not the policy holder");
-//         require(policy.active, "Policy is not active");
-//         require(block.timestamp <= policy.expiration, "Policy has expired");
-//         require(stablecoin.balanceOf(address(this)) >= policy.amount, "Insufficient funds for claim");
+        Policy storage policy = policies[msg.sender];
+        require(!policy.isActive, "Policy already active");
         
-//         uint value = stablecoin.balanceOf(address(this)) / policy.amount;
-//         require(value < depegThreshold, "Stablecoin is not depegged");
+        policy.policyHolder = msg.sender;
+        policy.premiumAmount = msg.value;
+        policy.coverageAmount = _coverageAmount;
+        policy.durationInDays = _durationInDays;
+        policy.startTime = block.timestamp;
+        policy.endTime = block.timestamp + (_durationInDays * 1 days);
+        policy.isActive = true;
         
-//         payouts[_policyId] = policy.amount;
-//         policy.active = false;
-
-//         emit ClaimSubmitted(msg.sender, policy.amount, block.timestamp);
-//     }
+        emit PolicyCreated(msg.sender, msg.value, _coverageAmount, _durationInDays);
+    }
     
-//     function validateClaim(uint _policyId) external view returns (bool) {
-//         Policy storage policy = policies[_policyId];
-//         require(policy.holder == msg.sender, "You are not the policy holder");
-//         require(policy.active == false, "Policy is still active");
-//         return payouts[_policyId] > 0;
-
-//         emit ClaimValidated( msg.sender, policy, block.timestamp );
-//     }
-    
-//     function claimPayout(uint _policyId) external {
-//         uint payout = payouts[_policyId];
-//         require(payout > 0, "No payout available");
+    function cancelPolicy() public {
+        Policy storage policy = policies[msg.sender];
+        require(policy.isActive, "Policy not active");
         
-//         payouts[_policyId] = 0;
-//         stablecoin.transfer(msg.sender, payout);
-
-//         emit ClaimPaidOut( msg.sender, payout, block.timestamp );
-//     }
-    
-//     function cancelPolicy(uint _policyId) external {
-//         Policy storage policy = policies[_policyId];
-//         require(policy.holder == msg.sender, "You are not the policy holder");
-//         require(policy.active, "Policy is not active");
-//         require(block.timestamp < policy.expiration, "Policy has expired");
+        payable(msg.sender).transfer(policy.premiumAmount);
         
-//         uint refund = policy.premium * (policy.expiration - block.timestamp) / (policy.expiration - (block.timestamp - 1));
-//         policy.active = false;
-//         stablecoin.transfer(msg.sender, refund);
-//         emit PolicyCancelled(msg.sender, refund);
-
-//     }
-
-//     function expirePolicy(uint _policyId) external {
-//         Policy storage policy = policies[_policyId];
-//         require(policy.holder == msg.sender, "You are not the policy holder");
-//         require(policy.expiration < block.timestamp, "Policy has not expired");
-//         require(policy.active, "Policy  is still active");
-
-//         policy.active = false;
-
-//         emit PolicyExpired(msg.sender, policy.amount, policy.expiration);
-//     }
-
-// }
+        policy.isActive = false;
+        
+        emit PolicyCanceled(msg.sender);
+    }
+    
+    function getPolicy(address _policyHolder) public view returns (uint premiumAmount, uint coverageAmount, uint durationInDays, uint startTime, uint endTime, bool isActive) {
+        Policy storage policy = policies[_policyHolder];
+        return (policy.premiumAmount, policy.coverageAmount, policy.durationInDays, policy.startTime, policy.endTime, policy.isActive);
+    }
+    
+    function payout() public {
+        Policy storage policy = policies[msg.sender];
+        require(policy.isActive, "Policy not active");
+        require(block.timestamp > policy.endTime, "Policy not expired");
+        
+        uint payoutAmount = policy.premiumAmount + (policy.coverageAmount * 2);
+        payable(msg.sender).transfer(payoutAmount);
+        
+        policy.isActive = false;
+        
+        emit PolicyPayout(msg.sender, payoutAmount);
+    }
+    
+    function setMaxCoverageAmount(uint _maxCoverageAmount) public {
+        maxCoverageAmount = _maxCoverageAmount;
+    }
+    
+    function setMaxDurationInDays(uint _maxDurationInDays) public {
+        maxDurationInDays = _maxDurationInDays;
+    }
+    
+}
