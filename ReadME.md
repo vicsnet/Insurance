@@ -113,7 +113,7 @@ Here are the necessary installation and initialization to be done before being a
 3. Navigate to the dApp website, Open the dApp in your browser and connect your MetaMask wallet to the application.
 4. Allow the application to access your wallet, and confirm the connection in MetaMask.
 
-> > > > > > a good practice to provide screenshots or step-by-step tutorials to guide users through the installation process.
+> a good practice to provide screenshots or step-by-step tutorials to guide users through the installation process.
 
 ## 04: USER GUIDE <a name="user"></a>
 
