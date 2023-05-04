@@ -95,7 +95,7 @@ contract InsuranceTest is Test {
         newCoverage.registerAdmin(Admin2);
         newCoverage.registerAdmin(Admin3);
         newCoverage.registerAdmin(Admin4);
-        newCoverage.registerAdmin(Owner);
+        // newCoverage.registerAdmin(Owner);
         newCoverage.setDAOFee(100_000);
 
 
@@ -117,14 +117,14 @@ contract InsuranceTest is Test {
             8 weeks
         );
         
-        vm.prank(Admin);
-        newCoverage.createInsurancePolicy(
-            "Evergreen Insure",
-            policyOffer,
-            agreement,
-            1 weeks,
-            8 weeks
-        );
+        // vm.prank(Admin);
+        // newCoverage.createInsurancePolicy(
+        //     "Evergreen Insure",
+        //     policyOffer,
+        //     agreement,
+        //     1 weeks,
+        //     8 weeks
+        // );
         newCoverage.returnAllPolicies();
 
         vm.prank(user);
@@ -137,50 +137,78 @@ contract InsuranceTest is Test {
             true,
             "Adeyemi Samuel"
         );
+        newCoverage.userGetPolicyPurchases(user);
 
         vm.prank(user);
         uint premium = newCoverage.generateHealthPolicy(
             40,
             1 weeks,
             52 weeks,
-            15000000
+            15000000,
+            0
         );
-        // console.log(premium);
+        console.log(premium);
         
-        vm.startPrank(user);
-        DAOToken.approve(address(newCoverage), 150_000_00);
-        newCoverage.payInsurance(150_000_00, 40, address(DAOToken));
-        vm.stopPrank();
+         vm.prank(user);
+        newCoverage.registerPolicy(
+            50,
+            60,
+            1,
+            age,
+            true,
+            false,
+            "Adeyemi daniel"
+        );
 
-        vm.prank(user);
-        newCoverage.claimHealthPolicy(true, 5000000, 40);
-
-        vm.prank(user);
         newCoverage.userGetPolicyPurchases(user);
-        newCoverage.getAllPurchase();
-
-        vm.prank(Admin);
-        newCoverage.validateClaim(40, user, true);
-        vm.prank(Admin2);
-        newCoverage.validateClaim(40, user, true);
-        vm.prank(Admin3);
-        newCoverage.validateClaim(40, user, false);
-        vm.prank(Admin4);
-        newCoverage.validateClaim(40, user, true);
-        vm.prank(Owner);
-        newCoverage.validateClaim(40, user, true);
-
         vm.prank(user);
-        uint dedux = newCoverage.ClaimReward(40, address(DAOToken));
-        console.log(dedux);
+        uint premium5 = newCoverage.generateHealthPolicy(
+            50,
+            6 weeks,
+            52 weeks,
+            15000,
+            1
+        );
+        newCoverage.userGetPolicyPurchases(user);
+    
 
-        // newCoverage.validateClaim(40, msg.sender, false);
-        // newCoverage.validateClaim(40, msg.sender, false);
-        // newCoverage.validateClaim(40, msg.sender, true);
-        // newCoverage.validateClaim(40, msg.sender, false);
-        // newCoverage.validateClaim(40, msg.sender, false);
+        // vm.startPrank(user);
+        // DAOToken.approve(address(newCoverage), 150_000_00);
+        // bool paid = newCoverage.payInsurance(0, 150_000_00, 40, address(DAOToken));
+        // console.log(paid);
+        // vm.stopPrank();
+
+        // newCoverage.userGetPolicyPurchases(user);
+
         // vm.prank(user);
-        // bool votesPerc = newCoverage.ValidateClaimStatus(40);
+        // newCoverage.claimHealthPolicy("url", 5000000, 1, 40);
+
+        // vm.prank(user);
+        // newCoverage.userGetPolicyPurchases(user);
+        // newCoverage.getAllPurchase();
+
+        // vm.prank(Admin);
+        // newCoverage.validateClaim(40, user, true);
+        // vm.prank(Admin2);
+        // newCoverage.validateClaim(40, user, true);
+        // vm.prank(Admin3);
+        // newCoverage.validateClaim(40, user, false);
+        // vm.prank(Admin4);
+        // newCoverage.validateClaim(40, user, true);
+        // // vm.prank(Owner);
+        // // newCoverage.validateClaim(40, user, true);
+
+        // vm.prank(user);
+        // uint dedux = newCoverage.ClaimReward(40, address(DAOToken));
+        // console.log(dedux);
+
+        // // newCoverage.validateClaim(40, msg.sender, false);
+        // // newCoverage.validateClaim(40, msg.sender, false);
+        // // newCoverage.validateClaim(40, msg.sender, true);
+        // // newCoverage.validateClaim(40, msg.sender, false);
+        // // newCoverage.validateClaim(40, msg.sender, false);
+        // // vm.prank(user);
+        // // bool votesPerc = newCoverage.ValidateClaimStatus(40);
 
         vm.prank(Admin);
         newCoverage.createProposal(
@@ -198,8 +226,8 @@ contract InsuranceTest is Test {
         newCoverage.vote( 1, false);
         vm.prank(Admin4);
         newCoverage.vote( 1, true);
-        vm.prank(Owner);
-        newCoverage.vote( 1, true);
+        // vm.prank(Owner);
+        // newCoverage.vote( 1, true);
 
         newCoverage.showVoteRecords(1);
 

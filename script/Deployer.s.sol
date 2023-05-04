@@ -25,19 +25,19 @@ contract DeployerScript is Script {
 
         vm.startBroadcast(deployerKey);
         newCoverage = new NewCoverage();
-        DAOToken = new CoverERC20("Neon", "Neon");
+        // DAOToken = new CoverERC20("Neon", "Neon");
         priceConsumerV3 = new PriceConsumerV3();
-        DAOToken.mint(address(newCoverage), 10_000_000);
+        // DAOToken.mint(address(newCoverage), 10_000_000);
 
-        newCoverage.registerAdmin(Admin);
-        newCoverage.registerAdmin(Admin2);
-        newCoverage.setDAOFee(100_000);
-        DAOToken.mint(user, 500_000);
+        // newCoverage.registerAdmin(Admin);
+        // newCoverage.registerAdmin(Admin2);
+        // newCoverage.setDAOFee(100_000);
+        // DAOToken.mint(user, 500_000);
         vm.stopBroadcast();
 
         vm.startBroadcast(userKey);
-        DAOToken.approve(address(newCoverage), 100_000);
-        newCoverage.joinDAO(100_000, address(DAOToken));
+        // DAOToken.approve(address(newCoverage), 100_000);
+        // newCoverage.joinDAO(100_000, address(DAOToken));
         vm.stopBroadcast();
 
     }
