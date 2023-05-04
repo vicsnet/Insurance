@@ -41,7 +41,7 @@ contract InsuranceTest is Test {
     //     newCoverage.verifyAdmin(Admin);
     // }
 
-    uint[] age = [45];
+    uint[] age = [45,60];
 
     // function test_Misc2() public {
     //     test_registerAdmin();
@@ -129,7 +129,7 @@ contract InsuranceTest is Test {
 
         vm.prank(user);
         newCoverage.registerPolicy(
-            40,
+            1,
             20,
             1,
             age,
@@ -137,11 +137,11 @@ contract InsuranceTest is Test {
             true,
             "Adeyemi Samuel"
         );
-        newCoverage.userGetPolicyPurchases(user);
+        // newCoverage.userGetPolicyPurchases(user);
 
         vm.prank(user);
         uint premium = newCoverage.generateHealthPolicy(
-            40,
+            1,
             1 weeks,
             52 weeks,
             15000000,
@@ -149,66 +149,58 @@ contract InsuranceTest is Test {
         );
         console.log(premium);
         
-         vm.prank(user);
-        newCoverage.registerPolicy(
-            50,
-            60,
-            1,
-            age,
-            true,
-            false,
-            "Adeyemi daniel"
-        );
+        //  vm.prank(user);
+        // newCoverage.registerPolicy(
+        //     50,
+        //     60,
+        //     1,
+        //     age,
+        //     true,
+        //     false,
+        //     "Adeyemi daniel"
+        // );
 
-        newCoverage.userGetPolicyPurchases(user);
-        vm.prank(user);
-        uint premium5 = newCoverage.generateHealthPolicy(
-            50,
-            6 weeks,
-            52 weeks,
-            15000,
-            1
-        );
-        newCoverage.userGetPolicyPurchases(user);
+        // newCoverage.userGetPolicyPurchases(user);
+        // vm.prank(user);
+        // uint premium5 = newCoverage.generateHealthPolicy(
+        //     50,
+        //     6 weeks,
+        //     52 weeks,
+        //     15000,
+        //     0
+        // );
+        // newCoverage.userGetPolicyPurchases(user);
     
 
-        // vm.startPrank(user);
-        // DAOToken.approve(address(newCoverage), 150_000_00);
-        // bool paid = newCoverage.payInsurance(0, 150_000_00, 40, address(DAOToken));
+        vm.startPrank(user);
+        DAOToken.approve(address(newCoverage), 150_000_00);
+        bool paid = newCoverage.payInsurance(0, 150_000_00, 1, address(DAOToken));
         // console.log(paid);
-        // vm.stopPrank();
+        vm.stopPrank();
 
         // newCoverage.userGetPolicyPurchases(user);
 
-        // vm.prank(user);
-        // newCoverage.claimHealthPolicy("url", 5000000, 1, 40);
+        vm.prank(user);
+        newCoverage.claimHealthPolicy("url", 5000000, 0, 1);
 
         // vm.prank(user);
         // newCoverage.userGetPolicyPurchases(user);
-        // newCoverage.getAllPurchase();
+        newCoverage.getAllPurchase();
 
-        // vm.prank(Admin);
+        vm.prank(Admin);
+        newCoverage.validateClaim(1, 0, user, true);
+        vm.prank(Admin2);
+        newCoverage.validateClaim(1, 0, user, true);
+        vm.prank(Admin3);
+        newCoverage.validateClaim(1, 0, user, false);
+        vm.prank(Admin4);
+        newCoverage.validateClaim(1, 0, user, true);
+        // vm.prank(Owner);
         // newCoverage.validateClaim(40, user, true);
-        // vm.prank(Admin2);
-        // newCoverage.validateClaim(40, user, true);
-        // vm.prank(Admin3);
-        // newCoverage.validateClaim(40, user, false);
-        // vm.prank(Admin4);
-        // newCoverage.validateClaim(40, user, true);
-        // // vm.prank(Owner);
-        // // newCoverage.validateClaim(40, user, true);
 
-        // vm.prank(user);
-        // uint dedux = newCoverage.ClaimReward(40, address(DAOToken));
+        vm.prank(user);
+        uint dedux = newCoverage.ClaimReward(1, address(DAOToken));
         // console.log(dedux);
-
-        // // newCoverage.validateClaim(40, msg.sender, false);
-        // // newCoverage.validateClaim(40, msg.sender, false);
-        // // newCoverage.validateClaim(40, msg.sender, true);
-        // // newCoverage.validateClaim(40, msg.sender, false);
-        // // newCoverage.validateClaim(40, msg.sender, false);
-        // // vm.prank(user);
-        // // bool votesPerc = newCoverage.ValidateClaimStatus(40);
 
         vm.prank(Admin);
         newCoverage.createProposal(

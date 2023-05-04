@@ -61,6 +61,8 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         uint ValidateFor; //admin validate claim
         uint Validateagainst; //admin validate against
         bool Claimed;
+        bool AppliedToClaim;
+        // bool Validated;
     }
 
     struct DAOProposal {
@@ -94,7 +96,6 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
     address[] public admins;
 
     event PaidInsurance(address insured, uint _amount);
-
 
     function registerAdmin(address _newAdmin) external onlyOwner {
         if (_newAdmin == address(0x0)) revert("ADDRESS_ZERO_REVERTED");
@@ -152,7 +153,6 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         uint _minimumPeriod,
         uint _maximumPeriod
     ) external onlyRole(ADMIN_ROLE) {
-
         insureId += 1;
 
         InsurancePolicy storage createPolicy = insurePolicy[insureId];
@@ -178,7 +178,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         string memory _familyName
     ) public {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
-        newPolicy.Trackedindex ;
+        newPolicy.Trackedindex;
         newPolicy.InsureId = _insureId;
         newPolicy.PercentageToCover = _percentageToCover;
         newPolicy.detailsOfhealth.FamilyNo = _familyNo;
@@ -194,8 +194,8 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         newPolicy.paid = false;
         newPolicy.AmountPaid = 0;
         ArrayPolicyPurchase[msg.sender].push(newPolicy);
-        AdminArrayPolicyPurchase.push(newPolicy);
-        newPolicy.Trackedindex +=1;
+        // AdminArrayPolicyPurchase.push(newPolicy);
+        newPolicy.Trackedindex += 1;
     }
 
     // generate health policy price
@@ -240,8 +240,9 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         if (_familyHealthStatus == false) {
             familyHealthFactor = 0;
         }
-
-        uint256 riskFactor = ((ageSum * uint256(40 * 1)) / 100) +
+        // uint256 dexAge = ageSum / _age.length;
+        uint256 riskFactor = (((ageSum / _age.length) * uint256(40 * 1)) /
+            100) +
             1 +
             2 +
             smokingFactor +
@@ -263,23 +264,24 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         ArrayPolicyPurchase[msg.sender][_trackedindex].AmountPaid = _premium;
         ArrayPolicyPurchase[msg.sender][_trackedindex].StartTime = timeToStart_;
         ArrayPolicyPurchase[msg.sender][_trackedindex].EndTime = timeToEnd_;
-        ArrayPolicyPurchase[msg.sender][_trackedindex].CoverageAmount = _amountInsureCover;
+        ArrayPolicyPurchase[msg.sender][_trackedindex]
+            .CoverageAmount = _amountInsureCover;
 
         // ArrayPolicyPurchase[msg.sender].push(newPolicy);
+        // AdminArrayPolicyPurchase.push(newPolicy);
 
-        return timeToStart_;
+        return _premium;
         // emit GeneratedHealthPolicy(msg.sender, _startTime, _premium);
     }
-
 
     function payInsurance(
         uint _trackedindex,
         uint _amount,
         uint _insureId,
         address _tokenDAO
-    ) external returns(bool){
+    ) external returns (bool) {
         PolicyPurchase storage newPolicy = policyBought[msg.sender][_insureId];
-        
+
         if (msg.sender != newPolicy.Insurer) {
             revert("Insurer record not found");
         }
@@ -305,6 +307,7 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         ArrayPolicyPurchase[msg.sender][_trackedindex].AmountPaid = _amount;
         ArrayPolicyPurchase[msg.sender][_trackedindex].paid = true;
 
+        // AdminArrayPolicyPurchase.push(newPolicy);
         return ArrayPolicyPurchase[msg.sender][_trackedindex].paid;
         emit PaidInsurance(msg.sender, _amount);
     }
@@ -327,6 +330,10 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         if (msg.sender != newPolicy.Insurer) {
             revert("Record not found");
         }
+
+        // if (newPolicy.detailsToclaim.AppliedToClaim = true) {
+        //     revert("Already applied to claim");
+        // }
         // if (_report == false) {
         //     revert("No evidence submitted");
         // }
@@ -334,38 +341,47 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         newPolicy.detailsToclaim.Report = _report;
         newPolicy.detailsToclaim.AmountToClaim = _amount;
         newPolicy.detailsToclaim.Claimed = false;
+        newPolicy.detailsToclaim.AppliedToClaim = true;
         newPolicy.Claim = ClaimStatus.Pending;
 
-        ArrayPolicyPurchase[msg.sender][_trackedindex].detailsToclaim.Report = _report;
-        ArrayPolicyPurchase[msg.sender][_trackedindex].detailsToclaim.AmountToClaim = _amount;
-        ArrayPolicyPurchase[msg.sender][_trackedindex].Claim = ClaimStatus.Pending;
+        ArrayPolicyPurchase[msg.sender][_trackedindex]
+            .detailsToclaim
+            .Report = _report;
+        ArrayPolicyPurchase[msg.sender][_trackedindex]
+            .detailsToclaim
+            .AmountToClaim = _amount;
+        ArrayPolicyPurchase[msg.sender][_trackedindex].Claim = ClaimStatus
+            .Pending;
+
+        AdminArrayPolicyPurchase.push(newPolicy);
 
         // emit ClaimedHealthPolicy(msg.sender, _amount);
     }
 
-    // function to get all the policy bought by a user
-    // function userGetPolicyPurchases(
-    //     address _insuredAcct
-    // ) external view returns (PolicyPurchase[] memory) {
-    //     PolicyPurchase[] storage purchases = ArrayPolicyPurchase[_insuredAcct];
-    //     return purchases;
-    // }
+    function userGetPolicyPurchases(
+        address _insuredAcct
+    ) external view returns (PolicyPurchase[] memory) {
+        PolicyPurchase[] storage purchases = ArrayPolicyPurchase[_insuredAcct];
+        PolicyPurchase[] memory result = new PolicyPurchase[](purchases.length);
 
-    function userGetPolicyPurchases(address _insuredAcct) external view returns (PolicyPurchase[] memory) {
-    PolicyPurchase[] storage purchases = ArrayPolicyPurchase[_insuredAcct];
-    PolicyPurchase[] memory result = new PolicyPurchase[](purchases.length);
-    
-    for (uint i = 0; i < purchases.length; i++) {
-        result[i] = purchases[i];
+        for (uint i = 0; i < purchases.length; i++) {
+            result[i] = purchases[i];
+        }
+
+        return result;
     }
-    
-    return result;
-}
-
 
     // get all insurance  policy
     function getAllPurchase() public view returns (PolicyPurchase[] memory) {
-        return AdminArrayPolicyPurchase;
+        PolicyPurchase[] storage purchases = AdminArrayPolicyPurchase;
+        PolicyPurchase[] memory result = new PolicyPurchase[](purchases.length);
+
+        for (uint i = 0; i < purchases.length; i++) {
+            result[i] = purchases[i];
+        }
+
+        return result;
+        // return AdminArrayPolicyPurchase;
     }
 
     function returnAllPolicies()
@@ -377,30 +393,65 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
     }
 
     // to validate reward it determines if the insured amount is to be paid or not
+    // function validateClaim(
+    //     uint _insureId,
+    //     uint _trackindindex,
+    //     address _rewardee,
+    //     bool _validate
+    // ) external {
+    //     PolicyPurchase storage newPolicy = policyBought[_rewardee][_insureId];
+
+    //     if (newPolicy.Insurer != _rewardee) revert("Rewardee not a subscriber");
+
+    //     if (!hasRole(ADMIN_ROLE, msg.sender)) {
+    //         revert("Unauthorized operation [validateClaim]");
+    //     }
+    //     if (hasValidateClaim[msg.sender][_insureId] == true)
+    //         revert("Can't validate twice");
+
+    //     if (_validate == true) {
+    //         newPolicy.detailsToclaim.ValidateFor += 1;
+    //     }
+    //     if (_validate == false) {
+    //         newPolicy.detailsToclaim.Validateagainst += 1;
+    //     }
+
+    //     hasValidateClaim[msg.sender][_insureId] = true;
+    // }
+
     function validateClaim(
-        uint _insureId,
-        address _rewardee,
-        bool _validate
-    ) external {
-        PolicyPurchase storage newPolicy = policyBought[_rewardee][_insureId];
+    uint _insureId,
+    uint _trackedindex,
+    address _rewardee,
+    bool _validate
+) external returns(PolicyPurchase[] memory){
+    PolicyPurchase storage newPolicy = policyBought[_rewardee][_insureId];
 
-        if (newPolicy.Insurer != _rewardee) revert("Rewardee not a subscriber");
+    if (newPolicy.Insurer != _rewardee) revert("Rewardee not a subscriber");
 
-        if (!hasRole(ADMIN_ROLE, msg.sender)) {
-            revert("Unauthorized operation [validateClaim]");
-        }
-        if (hasValidateClaim[msg.sender][_insureId] == true)
-            revert("Can't validate twice");
-
-        if (_validate == true) {
-            newPolicy.detailsToclaim.ValidateFor += 1;
-        }
-        if (_validate == false) {
-            newPolicy.detailsToclaim.Validateagainst += 1;
-        }
-
-        hasValidateClaim[msg.sender][_insureId] = true;
+    if (!hasRole(ADMIN_ROLE, msg.sender)) {
+        revert("Unauthorized operation [validateClaim]");
     }
+
+    // if (newPolicy.detailsToclaim.Validated) revert("Already validated");
+
+    if (_validate) {
+        newPolicy.detailsToclaim.ValidateFor += 1;
+        // return AdminArrayPolicyPurchase[_trackedindex];   
+    } else {
+        newPolicy.detailsToclaim.Validateagainst += 1;
+        // return AdminArrayPolicyPurchase[_trackedindex];
+    }
+
+    for(uint i = 0; i < AdminArrayPolicyPurchase.length; i++) {
+        if(AdminArrayPolicyPurchase[i].Trackedindex == _trackedindex) {
+            AdminArrayPolicyPurchase[i] = newPolicy;
+        }
+    }
+    
+    // newPolicy.detailsToclaim.Validated = true;
+}
+
 
     //Validate claim
     function ValidateClaimStatus(uint _insureId) internal returns (bool) {
@@ -414,15 +465,6 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
             revert("User record not found");
         }
 
-        // if(newPolicy.detailsToclaim.ValidateFor >= votesPercent ) {
-        //     newPolicy.Claim = ClaimStatus.Approved;
-        //     return true;
-        // } else if(newPolicy.detailsToclaim.Validateagainst >= votesPercent) {
-        //     newPolicy.Claim = ClaimStatus.Rejected;
-        //     return false;
-        // } else {
-        //     newPolicy.Claim = ClaimStatus.Pending;
-        // }
         if (newPolicy.detailsToclaim.ValidateFor < adminPercent) {
             // revert("Claim not approved");
             return false;
@@ -453,30 +495,22 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
             revert("User record not found");
         }
 
-        if(_newPolicy.detailsToclaim.Claimed == true) revert('Already claimed reward');
+        if (_newPolicy.detailsToclaim.Claimed == true)
+            revert("Already claimed reward");
 
         if (voteOutcome == false) revert("claim not approved");
 
         uint AmountLeft = _newPolicy.CoverageAmount -
-        _newPolicy.detailsToclaim.AmountToClaim;
+            _newPolicy.detailsToclaim.AmountToClaim;
         _newPolicy.CoverageAmount = AmountLeft;
 
         uint deductible = (_newPolicy.detailsToclaim.AmountToClaim *
             _newPolicy.PercentageToCover) / 100;
 
-        // if(_newPolicy.detailsToclaim.AmountToClaim > _newPolicy.deductible) {
-        //     uint reward = _newPolicy.detailsToclaim.AmountToClaim - deductible;
-        //     IERC20(_tokenDao).transfer(msg.sender, reward);
-        // } else {
-        //     uint reward = _newPolicy.deductible - _newPolicy.detailsToclaim.AmountToClaim;
-        //     IERC20(_tokenDao).transfer(msg.sender, reward);
-        // }
-
         _newPolicy.deductible = deductible;
         uint reward = _newPolicy.detailsToclaim.AmountToClaim - deductible;
         _newPolicy.detailsToclaim.Claimed = true;
         IERC20(_tokenDao).transfer(msg.sender, reward);
-
 
         return reward;
 
@@ -553,13 +587,13 @@ contract NewCoverage is AccessControl, Ownable, PriceConsumerV3 {
         return (_daoProposal.votesFor, _daoProposal.votesAgainst);
     }
 
-    function withdrawEther(uint _amount, address _to) external onlyOwner {
-        if (_amount == 0) revert("Amount cannot be zero");
-        if (_to == address(0x0)) revert("Address zero detected");
+    // function withdrawEther(uint _amount, address _to) external onlyOwner {
+    //     if (_amount == 0) revert("Amount cannot be zero");
+    //     if (_to == address(0x0)) revert("Address zero detected");
 
-        (bool success, ) = payable(_to).call{value: _amount}("");
-        require(success, "Ether withdrawal failed");
-    }
+    //     (bool success, ) = payable(_to).call{value: _amount}("");
+    //     require(success, "Ether withdrawal failed");
+    // }
 
     function withdrawToken(
         uint _amount,
